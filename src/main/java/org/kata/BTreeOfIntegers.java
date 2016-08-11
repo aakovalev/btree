@@ -5,6 +5,8 @@ import java.util.List;
 
 import static java.lang.Integer.valueOf;
 import static java.lang.String.format;
+import static java.util.Collections.binarySearch;
+import static java.util.Collections.unmodifiableList;
 
 public class BTreeOfIntegers {
     public static final int MIN_BRANCHING_FACTOR = 2;
@@ -22,13 +24,18 @@ public class BTreeOfIntegers {
         this.branchingFactor = branchingFactor;
     }
 
-    public void add(int key) {
+    public void insert(int keyToInsert) {
         if (keys.size() + 1 < branchingFactor) {
-            keys.add(key);
+            int position = findPositionToInsertKey(keyToInsert);
+            keys.add(position, keyToInsert);
         }
         else {
             childNodes.add(new BTreeOfIntegers(branchingFactor));
         }
+    }
+
+    private int findPositionToInsertKey(int keyToInsert) {
+        return ~binarySearch(keys, keyToInsert);
     }
 
     public boolean contains(int key) {
@@ -41,5 +48,9 @@ public class BTreeOfIntegers {
 
     public List<BTreeOfIntegers> getChildNodes() {
         return childNodes;
+    }
+
+    public List<Integer> getKeys() {
+        return unmodifiableList(keys);
     }
 }

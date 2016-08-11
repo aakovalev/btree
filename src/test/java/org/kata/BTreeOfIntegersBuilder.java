@@ -26,7 +26,7 @@ public class BTreeOfIntegersBuilder {
 
     public BTreeOfIntegers build() {
         BTreeOfIntegers tree = new BTreeOfIntegers(branchFactor);
-        keys.stream().forEach(tree::add);
+        keys.stream().forEach(tree::insert);
         return tree;
     }
 }
