@@ -7,6 +7,7 @@ import static java.util.Arrays.asList;
 import static org.kata.BTreeOfIntegers.MIN_BRANCHING_FACTOR;
 
 public class BTreeOfIntegersBuilder {
+
     private int branchFactor = MIN_BRANCHING_FACTOR;
     private List<Integer> keys = new ArrayList<>();
 

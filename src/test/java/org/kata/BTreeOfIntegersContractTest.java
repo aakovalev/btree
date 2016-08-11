@@ -11,6 +11,7 @@ import static org.junit.Assert.assertTrue;
 import static org.kata.BTreeOfIntegersBuilder.bTree;
 
 public class BTreeOfIntegersContractTest {
+
     @Test(expected = IllegalArgumentException.class)
     public void branchingFactorMustBeGreaterThanTwo() throws Exception {
         bTree().withBranchFactor(1).build();

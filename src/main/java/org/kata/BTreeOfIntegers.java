@@ -24,18 +24,14 @@ public class BTreeOfIntegers {
         this.branchingFactor = branchingFactor;
     }
 
-    public void insert(int keyToInsert) {
+    public void insert(int key) {
         if (keys.size() + 1 < branchingFactor) {
-            int position = findPositionToInsertKey(keyToInsert);
-            keys.add(position, keyToInsert);
+            int position = findPositionToInsertKey(key);
+            keys.add(position, key);
         }
         else {
             childNodes.add(new BTreeOfIntegers(branchingFactor));
         }
-    }
-
-    private int findPositionToInsertKey(int keyToInsert) {
-        return ~binarySearch(keys, keyToInsert);
     }
 
     public boolean contains(int key) {
@@ -52,5 +48,9 @@ public class BTreeOfIntegers {
 
     public List<Integer> getKeys() {
         return unmodifiableList(keys);
+    }
+
+    private int findPositionToInsertKey(int keyToInsert) {
+        return ~binarySearch(keys, keyToInsert);
     }
 }
