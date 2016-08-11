@@ -7,11 +7,11 @@ import static java.lang.Integer.valueOf;
 import static java.lang.String.format;
 
 public class BTreeOfIntegers {
-    private static final int MIN_BRANCHING_FACTOR = 2;
+    public static final int MIN_BRANCHING_FACTOR = 2;
     private int branchingFactor;
 
-    private List<Integer> keys = new ArrayList<Integer>();
-    private List<BTreeOfIntegers> childNodes = new ArrayList<BTreeOfIntegers>();
+    private List<Integer> keys = new ArrayList<>();
+    private List<BTreeOfIntegers> childNodes = new ArrayList<>();
 
     public BTreeOfIntegers(int branchingFactor) {
         if (branchingFactor < MIN_BRANCHING_FACTOR) {
