@@ -2,7 +2,6 @@ package org.kata;
 
 import org.junit.Test;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.greaterThan;
@@ -24,8 +23,7 @@ public class BTreeOfIntegersContractTest {
         tree.insert(key);
 
         assertTrue("Tree should contain just added key", tree.contains(key));
-        assertFalse("Tree should not contain key that is not yet added",
-                tree.contains(4567));
+        assertFalse("Tree should not contain key that is not yet added", tree.contains(4567));
     }
 
     @Test
@@ -38,36 +36,37 @@ public class BTreeOfIntegersContractTest {
     }
 
     @Test
-    public void rootShouldNotHaveChildNodesTilNumOfKeysLessThanBranchFactor()
+    public void givenLeafIsNotFullWhenKeyIsAddedThenTheKeyIsAddedIntoTheLeaf()
             throws Exception
     {
-        BTreeOfIntegers tree = bTree()
-                .withBranchFactor(3)
-                .withKeys(1234, 5678)
+        BTreeOfIntegers tree = bTree().withBranchFactor(3)
+                .withKeys(1234)
                 .build();
+        int newKey = 5678;
+        tree.insert(newKey);
 
-        assertThat(tree.getChildNodes().size(), is(0));
-    }
-
-    @Test
-    public void childNodeShouldAppearOnceNumOfKeysEqualsOrExceedsBranchFactor()
-            throws Exception
-    {
-        BTreeOfIntegers tree = bTree()
-                .withBranchFactor(3)
-                .withKeys(1234, 5678, 9012)
-                .build();
-
-        assertThat(tree.getChildNodes().size(), greaterThan(0));
+        assertTrue(tree.contains(newKey));
+        assertTrue(tree.isLeaf());
     }
 
     @Test
     public void keysWithinNodeShouldBeOrdered() throws Exception {
-        BTreeOfIntegers tree = bTree()
-                .withBranchFactor(5)
+        BTreeOfIntegers tree = bTree().withBranchFactor(5)
                 .withKeys(98, 56, 12, 34)
                 .build();
 
         assertThat(tree.getKeys(), contains(12, 34, 56, 98));
+    }
+
+    @Test
+    public void givenLeafIsFullWhenKeyIsAddedThenL()
+            throws Exception
+    {
+        BTreeOfIntegers tree = bTree().withBranchFactor(3)
+                .withKeys(1234, 5678)
+                .build();
+        tree.insert(9012);
+
+        assertThat(tree.getChildNodes().size(), greaterThan(0));
     }
 }

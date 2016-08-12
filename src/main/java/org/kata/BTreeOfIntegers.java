@@ -53,4 +53,8 @@ public class BTreeOfIntegers {
     private int findPositionToInsertKey(int keyToInsert) {
         return ~binarySearch(keys, keyToInsert);
     }
+
+    public boolean isLeaf() {
+        return childNodes.size() == 0;
+    }
 }
