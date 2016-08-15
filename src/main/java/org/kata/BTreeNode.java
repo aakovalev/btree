@@ -29,17 +29,6 @@ public class BTreeNode {
         this.branchingFactor = branchingFactor;
     }
 
-    public BTreeNode insert(int key) {
-        if (isFull()) {
-            BTreeNode parent = split();
-            parent.insertToNotFull(key);
-            return parent;
-        } else {
-            insertToNotFull(key);
-        }
-        return this;
-    }
-
     public boolean contains(int key) {
         return keys.contains(key);
     }
@@ -93,41 +82,40 @@ public class BTreeNode {
     }
 
     private BTreeNode findChildNodeToInsertKey(int key) {
+        int childNodeIndexByKey = findChildNodeIndexByKey(key);
+        return childNodes.get(childNodeIndexByKey);
+    }
+
+    private int findChildNodeIndexByKey(int key) {
         int i = keys.size() - 1;
         while (i >= 0 && key < keys.get(i)) {
             i--;
         }
-        return childNodes.get(i + 1);
+        return i + 1;
     }
 
     private int findPositionToInsertKey(int keyToInsert) {
         return ~binarySearch(keys, keyToInsert);
     }
 
-    private BTreeNode split() {
-        BTreeNode parent = new BTreeNode(branchingFactor);
-        int median = keys.get(branchingFactor - 1);
-        parent.insert(median);
+    public void splitChild(BTreeNode child) {
+        BTreeNode parent = this;
+        int median = child.keys.get(branchingFactor - 1);
+        child.keys.remove(valueOf(median));
 
-        BTreeNode leftSubNode = new BTreeNode(branchingFactor);
-        BTreeNode rightSubNode = new BTreeNode(branchingFactor);
+        BTreeNode newSubNode = new BTreeNode(branchingFactor);
+        child.keys.stream()
+                .filter(k -> k > median)
+                .forEach(newSubNode::insertNonFull);
+        child.keys.removeAll(newSubNode.getKeys());
 
-        keys.stream().forEach(k -> {
-            if (k < median) {
-                leftSubNode.insert(k);
-            }
-            if (k > median) {
-                rightSubNode.insert(k);
-            }
-        });
-
-        parent.addChild(leftSubNode);
-        parent.addChild(rightSubNode);
-
-        return parent;
+        int keyPositionInParent = parent.findPositionToInsertKey(median);
+        parent.keys.add(keyPositionInParent, median);
+        int newSubNodePositionInParent = parent.childNodes.indexOf(child) + 1;
+        parent.childNodes.add(newSubNodePositionInParent, newSubNode);
     }
 
-    private void addChild(BTreeNode childNode) {
+    protected void addChild(BTreeNode childNode) {
         this.childNodes.add(childNode);
     }
 
@@ -135,18 +123,23 @@ public class BTreeNode {
         return 2 * branchingFactor - 1;
     }
 
-    private boolean isFull() {
+    public boolean isFull() {
         return keys.size() >= maxKeysPerNode();
     }
 
-    private void insertToNotFull(int key) {
+    public void insertNonFull(int key) {
         if (isLeaf()) {
             int position = findPositionToInsertKey(key);
             keys.add(position, key);
-        }
-        else {
+        } else {
             BTreeNode node = findChildNodeToInsertKey(key);
-            node.insert(key);
+            if (node.isFull()) {
+                splitChild(node);
+                insertNonFull(key);
+            }
+            else {
+                node.insertNonFull(key);
+            }
         }
     }
 }

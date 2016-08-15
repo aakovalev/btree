@@ -1,15 +1,22 @@
 package org.kata;
 
 public class BTreeOfIntegers {
-    private int height = 0;
-    private BTreeNode root;
+    private int branchingFactor;
+    protected BTreeNode root;
 
     public BTreeOfIntegers(int branchingFactor) {
         this.root = new BTreeNode(branchingFactor);
+        this.branchingFactor = branchingFactor;
     }
 
     public void insert(int key) {
-        this.root.insert(key);
+        if (root.isFull()) {
+            BTreeNode newRoot = new BTreeNode(branchingFactor);
+            newRoot.addChild(root);
+            newRoot.splitChild(root);
+            root = newRoot;
+        }
+        root.insertNonFull(key);
     }
 
     public boolean contains(int key) {
@@ -18,9 +25,5 @@ public class BTreeOfIntegers {
 
     public void remove(int key) {
         this.root.remove(key);
-    }
-
-    public int getHeight() {
-        return height;
     }
 }
