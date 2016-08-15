@@ -1,18 +1,16 @@
 package org.kata;
 
 public class BTreeOfIntegers {
-    private int branchingFactor;
     protected BTreeNode root;
 
     public BTreeOfIntegers(int branchingFactor) {
         this.root = new BTreeNode(branchingFactor);
-        this.branchingFactor = branchingFactor;
     }
 
     public void insert(int key) {
         if (root.isFull()) {
-            BTreeNode newRoot = new BTreeNode(branchingFactor);
-            newRoot.addChild(root);
+            BTreeNode newRoot = new BTreeNode(root.getBranchingFactor());
+            newRoot.addChild(0, root);
             newRoot.splitChild(root);
             root = newRoot;
         }

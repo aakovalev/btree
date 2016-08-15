@@ -2,8 +2,6 @@ package org.kata;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,11 +10,14 @@ import static java.lang.Integer.valueOf;
 import static java.lang.String.format;
 import static java.util.Collections.binarySearch;
 import static java.util.Collections.unmodifiableList;
+import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
+import static org.apache.commons.lang3.builder.ToStringStyle.JSON_STYLE;
 
 public class BTreeNode {
     public static final int MIN_BRANCHING_FACTOR = 2;
-    private int branchingFactor;
 
+    private int branchingFactor;
     private List<Integer> keys = new ArrayList<>();
     private List<BTreeNode> childNodes = new ArrayList<>();
 
@@ -49,6 +50,41 @@ public class BTreeNode {
         return childNodes.size() == 0;
     }
 
+    public boolean isFull() {
+        return keys.size() >= maxKeysPerNode();
+    }
+
+    public int getBranchingFactor() {
+        return branchingFactor;
+    }
+
+    public void splitChild(BTreeNode child) {
+        BTreeNode parent = this;
+        int median = child.getMedianOfKeys();
+
+        BTreeNode newSubNode = new BTreeNode(branchingFactor);
+        child.moveHalfOfKeysTo(newSubNode);
+
+        parent.insertKey(median);
+        int newSubNodePositionInParent = parent.childNodes.indexOf(child) + 1;
+        parent.addChild(newSubNodePositionInParent, newSubNode);
+    }
+
+    public void insertNonFull(int key) {
+        if (isLeaf()) {
+            insertKey(key);
+        } else {
+            BTreeNode node = findChildNodeToInsertKey(key);
+            if (node.isFull()) {
+                splitChild(node);
+                insertNonFull(key);
+            }
+            else {
+                node.insertNonFull(key);
+            }
+        }
+    }
+
     @Override
     public int hashCode() {
         return new HashCodeBuilder()
@@ -77,8 +113,41 @@ public class BTreeNode {
 
     @Override
     public String toString() {
-        return ToStringBuilder
-                .reflectionToString(this, ToStringStyle.JSON_STYLE);
+        return reflectionToString(this, JSON_STYLE);
+    }
+
+    protected void addChild(int index, BTreeNode childNode) {
+        this.childNodes.add(index, childNode);
+    }
+
+    private void insertKeys(List<Integer> keysToInsert) {
+        keysToInsert.stream().forEach(this::insertNonFull);
+    }
+
+    private void insertKey(int key) {
+        int position = findPositionForKey(key);
+        keys.add(position, key);
+    }
+
+    private void moveHalfOfKeysTo(BTreeNode destNode) {
+        List<Integer> keysForNewSubNode = getKeysForNewSubNodeOnSplit();
+        destNode.insertKeys(keysForNewSubNode);
+        keys.removeAll(getKeysToCut());
+    }
+
+    private Integer getMedianOfKeys() {
+        return keys.get(branchingFactor - 1);
+    }
+
+    private List<Integer> getKeysForNewSubNodeOnSplit() {
+        int median = getMedianOfKeys();
+        return keys.stream().filter(k -> k > median).collect(toList());
+    }
+
+    private List<Integer> getKeysToCut() {
+        List<Integer> keysToCut = getKeysForNewSubNodeOnSplit();
+        keysToCut.add(getMedianOfKeys());
+        return keysToCut;
     }
 
     private BTreeNode findChildNodeToInsertKey(int key) {
@@ -87,59 +156,14 @@ public class BTreeNode {
     }
 
     private int findChildNodeIndexByKey(int key) {
-        int i = keys.size() - 1;
-        while (i >= 0 && key < keys.get(i)) {
-            i--;
-        }
-        return i + 1;
+        return findPositionForKey(key);
     }
 
-    private int findPositionToInsertKey(int keyToInsert) {
-        return ~binarySearch(keys, keyToInsert);
-    }
-
-    public void splitChild(BTreeNode child) {
-        BTreeNode parent = this;
-        int median = child.keys.get(branchingFactor - 1);
-        child.keys.remove(valueOf(median));
-
-        BTreeNode newSubNode = new BTreeNode(branchingFactor);
-        child.keys.stream()
-                .filter(k -> k > median)
-                .forEach(newSubNode::insertNonFull);
-        child.keys.removeAll(newSubNode.getKeys());
-
-        int keyPositionInParent = parent.findPositionToInsertKey(median);
-        parent.keys.add(keyPositionInParent, median);
-        int newSubNodePositionInParent = parent.childNodes.indexOf(child) + 1;
-        parent.childNodes.add(newSubNodePositionInParent, newSubNode);
-    }
-
-    protected void addChild(BTreeNode childNode) {
-        this.childNodes.add(childNode);
+    private int findPositionForKey(int key) {
+        return ~binarySearch(keys, key);
     }
 
     private int maxKeysPerNode() {
         return 2 * branchingFactor - 1;
-    }
-
-    public boolean isFull() {
-        return keys.size() >= maxKeysPerNode();
-    }
-
-    public void insertNonFull(int key) {
-        if (isLeaf()) {
-            int position = findPositionToInsertKey(key);
-            keys.add(position, key);
-        } else {
-            BTreeNode node = findChildNodeToInsertKey(key);
-            if (node.isFull()) {
-                splitChild(node);
-                insertNonFull(key);
-            }
-            else {
-                node.insertNonFull(key);
-            }
-        }
     }
 }
