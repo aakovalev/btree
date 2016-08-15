@@ -1,60 +1,26 @@
 package org.kata;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static java.lang.Integer.valueOf;
-import static java.lang.String.format;
-import static java.util.Collections.binarySearch;
-import static java.util.Collections.unmodifiableList;
-
 public class BTreeOfIntegers {
-    public static final int MIN_BRANCHING_FACTOR = 2;
-    private int branchingFactor;
-
-    private List<Integer> keys = new ArrayList<>();
-    private List<BTreeOfIntegers> childNodes = new ArrayList<>();
+    private int height = 0;
+    private BTreeNode root;
 
     public BTreeOfIntegers(int branchingFactor) {
-        if (branchingFactor < MIN_BRANCHING_FACTOR) {
-            throw new IllegalArgumentException(
-                    format("Branching Factor should be greater than " +
-                            "or equals to 2, but passed '%d'", branchingFactor));
-        }
-        this.branchingFactor = branchingFactor;
+        this.root = new BTreeNode(branchingFactor);
     }
 
     public void insert(int key) {
-        if (keys.size() + 1 < branchingFactor) {
-            int position = findPositionToInsertKey(key);
-            keys.add(position, key);
-        }
-        else {
-            childNodes.add(new BTreeOfIntegers(branchingFactor));
-        }
+        this.root.insert(key);
     }
 
     public boolean contains(int key) {
-        return keys.contains(key);
+        return this.root.contains(key);
     }
 
     public void remove(int key) {
-        keys.remove(valueOf(key));
+        this.root.remove(key);
     }
 
-    public List<BTreeOfIntegers> getChildNodes() {
-        return childNodes;
-    }
-
-    public List<Integer> getKeys() {
-        return unmodifiableList(keys);
-    }
-
-    private int findPositionToInsertKey(int keyToInsert) {
-        return ~binarySearch(keys, keyToInsert);
-    }
-
-    public boolean isLeaf() {
-        return childNodes.size() == 0;
+    public int getHeight() {
+        return height;
     }
 }
