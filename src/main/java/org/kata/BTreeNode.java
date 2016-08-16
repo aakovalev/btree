@@ -31,15 +31,15 @@ public class BTreeNode {
     }
 
     public boolean contains(int key) {
-        return keys.contains(key);
+        int index = 0;
+        while (index < keys.size() && key > keys.get(index)) {
+            index++;
+        }
+        return keys.contains(key) || !isLeaf() && childNodes.get(index).contains(key);
     }
 
     public void remove(int key) {
         keys.remove(valueOf(key));
-    }
-
-    public List<BTreeNode> getChildNodes() {
-        return unmodifiableList(childNodes);
     }
 
     public List<Integer> getKeys() {
@@ -93,6 +93,7 @@ public class BTreeNode {
         return new HashCodeBuilder()
                 .append(branchingFactor)
                 .append(keys)
+                .append(childNodes)
                 .toHashCode();
     }
 
@@ -111,6 +112,7 @@ public class BTreeNode {
         return new EqualsBuilder()
                 .append(branchingFactor, otherNode.branchingFactor)
                 .append(keys, otherNode.keys)
+                .append(childNodes, otherNode.childNodes)
                 .isEquals();
     }
 
@@ -163,7 +165,7 @@ public class BTreeNode {
         return keysToCut;
     }
 
-    public List<BTreeNode> getChildrenForNewSubNodeOnSplit() {
+    private List<BTreeNode> getChildrenForNewSubNodeOnSplit() {
         return childNodes
                 .subList(childNodes.size() / 2, childNodes.size());
     }

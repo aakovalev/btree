@@ -7,15 +7,14 @@ import java.util.List;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class BTreeOfIntegersTest {
     @Test
     public void canAddOneKeyToEmptyTree() throws Exception {
-        int branchingFactor = 3;
-        BTreeOfIntegers tree = new BTreeOfIntegers(branchingFactor);
+        int branchFactor = 3;
+        BTreeOfIntegers tree = new BTreeOfIntegers(branchFactor);
         insertKeysIntoTree(keys(1234), tree);
 
         assertTrue("Tree should contain just added key", tree.contains(1234));
@@ -59,24 +58,25 @@ public class BTreeOfIntegersTest {
     public void whenNonRootNoneInternalNodeIsFullAndNewKeyIsAdded()
             throws Exception
     {
-        int branchingFactor = 2;
+        int branchFactor = 2;
         WhiteBoxTestableBTreeOnIntegers tree =
-                new WhiteBoxTestableBTreeOnIntegers(branchingFactor);
+                new WhiteBoxTestableBTreeOnIntegers(branchFactor);
         insertKeysIntoTree(keys(1234, 5678, 9012, 3456, 4010, 4020), tree);
 
-        BTreeNode first = new BTreeNode(branchingFactor);
-        insertKeysIntoNode(keys(1234), first);
+        BTreeNode expectedTree =
+                makeNode(branchFactor, keys(3456, 5678),
+                        children(
+                                makeNode(branchFactor, keys(1234),
+                                        children()),
+                                makeNode(branchFactor, keys(4010, 4020),
+                                        children()),
+                                makeNode(branchFactor, keys(9012),
+                                        children())
+                        )
+                );
 
-        BTreeNode second = new BTreeNode(branchingFactor);
-        insertKeysIntoNode(keys(4010, 4020), second);
-
-        BTreeNode third = new BTreeNode(branchingFactor);
-        insertKeysIntoNode(keys(9012), third);
-
-        BTreeNode root = tree.getRoot();
-
-        assertThat(root.getKeys(), contains(3456, 5678));
-        assertThat(root.getChildNodes(), contains(first, second, third));
+        BTreeNode actualTree = tree.getRoot();
+        assertThat(actualTree, is(expectedTree));
     }
 
     @Test
@@ -123,6 +123,39 @@ public class BTreeOfIntegersTest {
         assertThat(actualTree, is(expectedTree));
     }
 
+    @Test
+    public void shouldFindKeyIfExistsInTree() throws Exception {
+        int branchFactor = 2;
+        BTreeNode testTree =
+                makeNode(branchFactor, keys(4020),
+                        children(
+                                makeNode(branchFactor, keys(3456),
+                                        children(
+                                                makeNode(branchFactor,
+                                                        keys(1234),
+                                                        children()),
+                                                makeNode(branchFactor,
+                                                        keys(4010),
+                                                        children())
+                                        )
+                                ),
+                                makeNode(branchFactor, keys(5678),
+                                        children(
+                                                makeNode(branchFactor,
+                                                        keys(4030, 4040, 4050),
+                                                        children()),
+                                                makeNode(branchFactor,
+                                                        keys(9012),
+                                                        children())
+                                        ))
+                        )
+                );
+        assertTrue(testTree.contains(4020));
+        assertTrue(testTree.contains(9012));
+        assertTrue(testTree.contains(3456));
+        assertTrue(testTree.contains(4030));
+    }
+
     private BTreeNode makeNode(
             int branchingFactor, List<Integer> keys, List<BTreeNode> children)
     {
@@ -158,8 +191,7 @@ public class BTreeOfIntegersTest {
     }
 
     private static class WhiteBoxTestableBTreeOnIntegers
-            extends BTreeOfIntegers
-    {
+            extends BTreeOfIntegers {
         public WhiteBoxTestableBTreeOnIntegers(int branchingFactor) {
             super(branchingFactor);
         }
