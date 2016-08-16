@@ -66,7 +66,7 @@ public class BTreeNode {
         child.moveHalfOfKeysTo(newSubNode);
 
         parent.insertKey(median);
-        int newSubNodePositionInParent = parent.childNodes.indexOf(child) + 1;
+        int newSubNodePositionInParent = parent.getChildPosition(child) + 1;
         parent.addChild(newSubNodePositionInParent, newSubNode);
     }
 
@@ -161,6 +161,10 @@ public class BTreeNode {
 
     private int findPositionForKey(int key) {
         return ~binarySearch(keys, key);
+    }
+
+    private int getChildPosition(BTreeNode child) {
+        return childNodes.indexOf(child);
     }
 
     private int maxKeysPerNode() {
