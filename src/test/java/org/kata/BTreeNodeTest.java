@@ -7,7 +7,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class BTreeNodeTests {
+public class BTreeNodeTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void branchingFactorMustBeGreaterThanTwo() throws Exception {

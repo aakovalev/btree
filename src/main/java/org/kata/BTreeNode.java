@@ -64,6 +64,9 @@ public class BTreeNode {
 
         BTreeNode newSubNode = new BTreeNode(branchingFactor);
         child.moveHalfOfKeysTo(newSubNode);
+        if (!child.isLeaf()) {
+            child.moveHalfOfChilds(newSubNode);
+        }
 
         parent.insertKey(median);
         int newSubNodePositionInParent = parent.getChildPosition(child) + 1;
@@ -129,10 +132,20 @@ public class BTreeNode {
         keys.add(position, key);
     }
 
+    private void insertChildren(List<BTreeNode> children) {
+        this.childNodes.addAll(children);
+    }
+
     private void moveHalfOfKeysTo(BTreeNode destNode) {
         List<Integer> keysForNewSubNode = getKeysForNewSubNodeOnSplit();
         destNode.insertKeys(keysForNewSubNode);
         keys.removeAll(getKeysToCut());
+    }
+
+    private void moveHalfOfChilds(BTreeNode destNode) {
+        List<BTreeNode> childrenForNewNode = getChildrenForNewSubNodeOnSplit();
+        destNode.insertChildren(childrenForNewNode);
+        childNodes.removeAll(childrenForNewNode);
     }
 
     private Integer getMedianOfKeys() {
@@ -148,6 +161,11 @@ public class BTreeNode {
         List<Integer> keysToCut = getKeysForNewSubNodeOnSplit();
         keysToCut.add(getMedianOfKeys());
         return keysToCut;
+    }
+
+    public List<BTreeNode> getChildrenForNewSubNodeOnSplit() {
+        return childNodes
+                .subList(childNodes.size() / 2, childNodes.size());
     }
 
     private BTreeNode findChildNodeToInsertKey(int key) {
