@@ -5,18 +5,16 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.MIN_VALUE;
 import static java.lang.String.format;
-import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.kata.BTreeNode.LOWEST_MIN_DEGREE;
+import static org.kata.BTreeTestUtils.*;
 
 public class BTreeOfIntegersTest {
     @Test
@@ -46,8 +44,8 @@ public class BTreeOfIntegersTest {
             throws Exception
     {
         int minDegree = 2;
-        WhiteBoxTestableBTreeOnIntegers tree =
-                new WhiteBoxTestableBTreeOnIntegers(minDegree);
+        WhiteBoxTestableBTreeOfIntegers tree =
+                new WhiteBoxTestableBTreeOfIntegers(minDegree);
         insertKeysIntoTree(keys(1234, 5678, 9012, 3456), tree);
 
         BTreeNode expectedTree =
@@ -68,8 +66,8 @@ public class BTreeOfIntegersTest {
             throws Exception
     {
         int minDegree = 2;
-        WhiteBoxTestableBTreeOnIntegers tree =
-                new WhiteBoxTestableBTreeOnIntegers(minDegree);
+        WhiteBoxTestableBTreeOfIntegers tree =
+                new WhiteBoxTestableBTreeOfIntegers(minDegree);
         insertKeysIntoTree(keys(1234, 5678, 9012, 3456, 4010, 4020), tree);
 
         BTreeNode expectedTree =
@@ -91,8 +89,8 @@ public class BTreeOfIntegersTest {
     @Test
     public void whenInternalNodeIsFullAndNewKeyIsAdded() throws Exception {
         int minDegree = 2;
-        WhiteBoxTestableBTreeOnIntegers tree =
-                new WhiteBoxTestableBTreeOnIntegers(minDegree);
+        WhiteBoxTestableBTreeOfIntegers tree =
+                new WhiteBoxTestableBTreeOfIntegers(minDegree);
         insertKeysIntoTree(
                 keys(1234, 5678, 9012, 3456, 4010, 4020, 4030, 4040,
                         4050, 4060, 4070, 4080, 4090), tree);
@@ -175,8 +173,8 @@ public class BTreeOfIntegersTest {
     @Test
     public void allowsToInsertDuplicateKeys() throws Exception {
         int minDegree = 2;
-        WhiteBoxTestableBTreeOnIntegers tree =
-                new WhiteBoxTestableBTreeOnIntegers(minDegree);
+        WhiteBoxTestableBTreeOfIntegers tree =
+                new WhiteBoxTestableBTreeOfIntegers(minDegree);
         insertKeysIntoTree(keys(100, 100, 100, 100), tree);
 
         BTreeNode expectedTree = makeNode(minDegree, keys(100),
@@ -194,8 +192,8 @@ public class BTreeOfIntegersTest {
     public void eachNodeShouldContainNotLessThanMinDegreeMinusOneKeysExceptTheRoot()
             throws Exception
     {
-        WhiteBoxTestableBTreeOnIntegers tree =
-                WhiteBoxTestableBTreeOnIntegers.generateRandomBTree();
+        WhiteBoxTestableBTreeOfIntegers tree =
+                WhiteBoxTestableBTreeOfIntegers.generateRandomBTree();
 
         tree.getAllNonRootNodes().stream().forEach(
                 node -> {
@@ -214,8 +212,8 @@ public class BTreeOfIntegersTest {
     public void eachNodeShouldContainNotMoreThanMinDegreeByTwoMinusOneKeys()
             throws Exception
     {
-        WhiteBoxTestableBTreeOnIntegers tree =
-                WhiteBoxTestableBTreeOnIntegers.generateRandomBTree();
+        WhiteBoxTestableBTreeOfIntegers tree =
+                WhiteBoxTestableBTreeOfIntegers.generateRandomBTree();
 
         tree.getAllNodes().stream().forEach(
                 node -> {
@@ -231,8 +229,8 @@ public class BTreeOfIntegersTest {
 
     @Test
     public void keysWithinEachNodeShouldBeOrderedAsc() throws Exception {
-        WhiteBoxTestableBTreeOnIntegers tree =
-                WhiteBoxTestableBTreeOnIntegers.generateRandomBTree();
+        WhiteBoxTestableBTreeOfIntegers tree =
+                WhiteBoxTestableBTreeOfIntegers.generateRandomBTree();
 
         tree.getAllNodes().stream().forEach(
                 node -> {
@@ -250,48 +248,14 @@ public class BTreeOfIntegersTest {
     public void keyValuesWithinEachNodeAreWithinRequiredInterval()
             throws Exception
     {
-        WhiteBoxTestableBTreeOnIntegers tree =
-                WhiteBoxTestableBTreeOnIntegers.generateRandomBTree();
+        WhiteBoxTestableBTreeOfIntegers tree =
+                WhiteBoxTestableBTreeOfIntegers.generateRandomBTree();
 
         assertTrue(keysAreWithinRange(tree.getRoot(), MIN_VALUE, MAX_VALUE));
     }
 
     @Test
     public void canFindAllLeaves() throws Exception {
-    }
-
-    private BTreeNode makeNode(
-            int minDegree, List<Integer> keys, List<BTreeNode> children)
-    {
-        BTreeNode expectedTree = new BTreeNode(minDegree);
-        insertKeysIntoNode(keys, expectedTree);
-        insertChildrenIntoNode(children, expectedTree);
-        return expectedTree;
-    }
-
-    private void insertChildrenIntoNode(
-            List<BTreeNode> children, BTreeNode node)
-    {
-        int i = 0;
-        for (BTreeNode child : children) {
-            node.addChild(i++, child);
-        }
-    }
-
-    private void insertKeysIntoTree(List<Integer> keys, BTreeOfIntegers tree) {
-        keys.forEach(tree::insert);
-    }
-
-    private void insertKeysIntoNode(List<Integer> keys, BTreeNode node) {
-        keys.forEach(node::insertNonFull);
-    }
-
-    private List<Integer> keys(Integer... key) {
-        return asList(key);
-    }
-
-    private List<BTreeNode> children(BTreeNode... child) {
-        return asList(child);
     }
 
     private boolean keysAreWithinRange(BTreeNode node, int left, int right) {
@@ -323,60 +287,5 @@ public class BTreeOfIntegersTest {
         }
 
         return valid;
-    }
-
-    private static class WhiteBoxTestableBTreeOnIntegers
-            extends BTreeOfIntegers
-    {
-        private final static Random RND = new Random();
-
-        // limit highest min degree for test purpose
-        private final static int HIGHEST_MIN_DEGREE = 10;
-
-        // limit keys / min degree ratio for test purpose
-        private final static int KEY_NUMBER_MIN_DEGREE_RATIO = 50;
-
-        public static int generateRandomDegree() {
-            return RND.nextInt(HIGHEST_MIN_DEGREE) + LOWEST_MIN_DEGREE;
-        }
-
-        public static WhiteBoxTestableBTreeOnIntegers generateRandomBTree()
-        {
-            WhiteBoxTestableBTreeOnIntegers generatedTree =
-                    new WhiteBoxTestableBTreeOnIntegers(generateRandomDegree());
-            populateWithKeys(generatedTree);
-            return generatedTree;
-        }
-
-        private static void populateWithKeys(
-                WhiteBoxTestableBTreeOnIntegers tree)
-        {
-            int numberOfKeysToGenerate =
-                    tree.getMinDegree() * KEY_NUMBER_MIN_DEGREE_RATIO;
-            RND.ints().limit(numberOfKeysToGenerate).forEach(tree::insert);
-        }
-
-        public WhiteBoxTestableBTreeOnIntegers(int minDegree) {
-            super(minDegree);
-        }
-
-        public BTreeNode getRoot() {
-            return root;
-        }
-
-        public int getMinDegree() {
-            return root.getMinDegree();
-        }
-
-        public List<BTreeNode> getAllNonRootNodes() {
-            return root.getAllDescendants();
-        }
-
-        public List<BTreeNode> getAllNodes() {
-            List<BTreeNode> allNodes = new ArrayList<>();
-            allNodes.add(root);
-            allNodes.addAll(root.getAllDescendants());
-            return allNodes;
-        }
     }
 }
