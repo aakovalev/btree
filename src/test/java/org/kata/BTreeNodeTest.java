@@ -1,11 +1,15 @@
 package org.kata;
 
 import org.junit.Test;
+import org.kata.BTreeOfIntegers.BTreeNode;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.kata.BTreeTestUtils.*;
 
 public class BTreeNodeTest {
 
@@ -55,5 +59,44 @@ public class BTreeNodeTest {
 
         assertTrue(node.contains(newKey));
         assertTrue(node.isLeaf());
+    }
+
+    @Test
+    public void canFindAllLeavesOfTheGivenNode() throws Exception {
+        int minDegree = 2;
+
+        BTreeNode leafOne = makeNode(minDegree, keys(10), children());
+        BTreeNode leafTwo = makeNode(minDegree, keys(30), children());
+        BTreeNode leafThree = makeNode(minDegree, keys(70, 80, 90), children());
+
+        BTreeNode tree = makeNode(minDegree, keys(40),
+                children(
+                        makeNode(minDegree, keys(20), children(leafOne, leafTwo)),
+                        makeNode(minDegree, keys(60), children(leafThree))
+                )
+        );
+
+        assertThat(tree.getAllLeaves(), hasItems(leafOne, leafTwo, leafThree));
+    }
+
+    @Test
+    public void canFindHeightForTheGivenLeaf() throws Exception {
+        int minDegree = 2;
+
+        BTreeNode leafOne = makeNode(minDegree, keys(10), children());
+        BTreeNode leafTwo = makeNode(minDegree, keys(30), children());
+        BTreeNode leafThree = makeNode(minDegree, keys(70, 80, 90), children());
+        BTreeNode internalNode = makeNode(minDegree, keys(20), children(leafOne, leafTwo));
+
+        BTreeNode tree = makeNode(minDegree, keys(40),
+                children(
+                        internalNode,
+                        makeNode(minDegree, keys(60), children(leafThree))
+                )
+        );
+
+        assertThat(tree.getDistanceTo(leafThree), is(2));
+        assertThat(tree.getDistanceTo(internalNode), is(1));
+        assertThat(tree.getDistanceTo(tree), is(0));
     }
 }

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import static org.kata.BTreeNode.LOWEST_MIN_DEGREE;
+import static org.kata.BTreeOfIntegers.BTreeNode.LOWEST_MIN_DEGREE;
 
 public class WhiteBoxTestableBTreeOfIntegers extends BTreeOfIntegers {
     private final static Random RND = new Random();

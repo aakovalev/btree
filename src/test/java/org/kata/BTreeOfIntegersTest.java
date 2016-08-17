@@ -48,7 +48,7 @@ public class BTreeOfIntegersTest {
                 new WhiteBoxTestableBTreeOfIntegers(minDegree);
         insertKeysIntoTree(keys(1234, 5678, 9012, 3456), tree);
 
-        BTreeNode expectedTree =
+        BTreeOfIntegers.BTreeNode expectedTree =
                 makeNode(minDegree, keys(5678),
                         children(
                                 makeNode(minDegree, keys(1234, 3456),
@@ -57,7 +57,7 @@ public class BTreeOfIntegersTest {
                         )
                 );
 
-        BTreeNode actualTree = tree.getRoot();
+        BTreeOfIntegers.BTreeNode actualTree = tree.getRoot();
         assertThat(actualTree, is(expectedTree));
     }
 
@@ -70,7 +70,7 @@ public class BTreeOfIntegersTest {
                 new WhiteBoxTestableBTreeOfIntegers(minDegree);
         insertKeysIntoTree(keys(1234, 5678, 9012, 3456, 4010, 4020), tree);
 
-        BTreeNode expectedTree =
+        BTreeOfIntegers.BTreeNode expectedTree =
                 makeNode(minDegree, keys(3456, 5678),
                         children(
                                 makeNode(minDegree, keys(1234),
@@ -82,7 +82,7 @@ public class BTreeOfIntegersTest {
                         )
                 );
 
-        BTreeNode actualTree = tree.getRoot();
+        BTreeOfIntegers.BTreeNode actualTree = tree.getRoot();
         assertThat(actualTree, is(expectedTree));
     }
 
@@ -95,7 +95,7 @@ public class BTreeOfIntegersTest {
                 keys(1234, 5678, 9012, 3456, 4010, 4020, 4030, 4040,
                         4050, 4060, 4070, 4080, 4090), tree);
 
-        BTreeNode expectedTree = makeNode(minDegree, keys(4020, 4060),
+        BTreeOfIntegers.BTreeNode expectedTree = makeNode(minDegree, keys(4020, 4060),
                 children(
                         makeNode(minDegree, keys(3456),
                                 children(
@@ -126,14 +126,14 @@ public class BTreeOfIntegersTest {
                                 ))
                 ));
 
-        BTreeNode actualTree = tree.getRoot();
+        BTreeOfIntegers.BTreeNode actualTree = tree.getRoot();
         assertThat(actualTree, is(expectedTree));
     }
 
     @Test
     public void shouldFindKeyIfExistsInTree() throws Exception {
         int minDegree = 2;
-        BTreeNode testTree =
+        BTreeOfIntegers.BTreeNode testTree =
                 makeNode(minDegree, keys(4020),
                         children(
                                 makeNode(minDegree, keys(3456),
@@ -177,14 +177,14 @@ public class BTreeOfIntegersTest {
                 new WhiteBoxTestableBTreeOfIntegers(minDegree);
         insertKeysIntoTree(keys(100, 100, 100, 100), tree);
 
-        BTreeNode expectedTree = makeNode(minDegree, keys(100),
+        BTreeOfIntegers.BTreeNode expectedTree = makeNode(minDegree, keys(100),
                 children(
                         makeNode(minDegree, keys(100, 100), children()),
                         makeNode(minDegree, keys(100), children())
                 )
         );
 
-        BTreeNode actualTree = tree.getRoot();
+        BTreeOfIntegers.BTreeNode actualTree = tree.getRoot();
         assertThat(actualTree, is(expectedTree));
     }
 
@@ -254,11 +254,7 @@ public class BTreeOfIntegersTest {
         assertTrue(keysAreWithinRange(tree.getRoot(), MIN_VALUE, MAX_VALUE));
     }
 
-    @Test
-    public void canFindAllLeaves() throws Exception {
-    }
-
-    private boolean keysAreWithinRange(BTreeNode node, int left, int right) {
+    private boolean keysAreWithinRange(BTreeOfIntegers.BTreeNode node, int left, int right) {
         boolean valid = true;
 
         for (int k : node.getKeys()) {
@@ -273,7 +269,7 @@ public class BTreeOfIntegersTest {
             int maxChildIndex = node.getChildren().size() - 1;
             int maxKeyIndex = node.getKeys().size() - 1;
 
-            for (BTreeNode child : node.getChildren()) {
+            for (BTreeOfIntegers.BTreeNode child : node.getChildren()) {
                 int newRightBound = currentChildIndex == 0 ?
                         node.getKeys().get(maxKeyIndex) : right;
                 int newLeftBound = currentChildIndex == maxChildIndex ?

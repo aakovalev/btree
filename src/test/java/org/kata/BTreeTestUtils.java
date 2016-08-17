@@ -3,11 +3,13 @@ package org.kata;
 import java.util.List;
 
 import static java.util.Arrays.asList;
+import static org.kata.BTreeOfIntegers.*;
 
 public class BTreeTestUtils {
+    private static final int DEFAULT_MIN_DEGREE_IN_TESTS = 2;
 
     public static BTreeNode makeNode(
-            int minDegree, List<Integer> keys, List<BTreeNode> children)
+            int minDegree, List<Integer> keys, List<BTreeOfIntegers.BTreeNode> children)
     {
         BTreeNode expectedTree = new BTreeNode(minDegree);
         insertKeysIntoNode(keys, expectedTree);
@@ -16,7 +18,7 @@ public class BTreeTestUtils {
     }
 
     public static void insertChildrenIntoNode(
-            List<BTreeNode> children, BTreeNode node)
+            List<BTreeOfIntegers.BTreeNode> children, BTreeNode node)
     {
         int i = 0;
         for (BTreeNode child : children) {
@@ -36,7 +38,7 @@ public class BTreeTestUtils {
         return asList(key);
     }
 
-    public static List<BTreeNode> children(BTreeNode... child) {
+    public static List<BTreeOfIntegers.BTreeNode> children(BTreeNode... child) {
         return asList(child);
     }
 }
