@@ -8,9 +8,7 @@ import java.util.List;
 
 import static java.lang.Integer.valueOf;
 import static java.lang.String.format;
-import static java.util.Collections.binarySearch;
 import static java.util.Collections.unmodifiableList;
-import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
 import static org.apache.commons.lang3.builder.ToStringStyle.JSON_STYLE;
 
@@ -35,7 +33,8 @@ public class BTreeNode {
         while (index < keys.size() && key > keys.get(index)) {
             index++;
         }
-        return keys.contains(key) || !isLeaf() && childNodes.get(index).contains(key);
+        return keys.contains(key) ||
+                !isLeaf() && childNodes.get(index).contains(key);
     }
 
     public void remove(int key) {
@@ -141,7 +140,7 @@ public class BTreeNode {
     private void moveHalfOfKeysTo(BTreeNode destNode) {
         List<Integer> keysForNewSubNode = getKeysForNewSubNodeOnSplit();
         destNode.insertKeys(keysForNewSubNode);
-        keys.removeAll(getKeysToCut());
+        keys = keys.subList(0, branchingFactor - 1);
     }
 
     private void moveHalfOfChilds(BTreeNode destNode) {
@@ -155,14 +154,7 @@ public class BTreeNode {
     }
 
     private List<Integer> getKeysForNewSubNodeOnSplit() {
-        int median = getMedianOfKeys();
-        return keys.stream().filter(k -> k > median).collect(toList());
-    }
-
-    private List<Integer> getKeysToCut() {
-        List<Integer> keysToCut = getKeysForNewSubNodeOnSplit();
-        keysToCut.add(getMedianOfKeys());
-        return keysToCut;
+        return keys.subList(branchingFactor, keys.size());
     }
 
     private List<BTreeNode> getChildrenForNewSubNodeOnSplit() {
@@ -180,7 +172,11 @@ public class BTreeNode {
     }
 
     private int findPositionForKey(int key) {
-        return ~binarySearch(keys, key);
+        int index = 0;
+        while (index < keys.size() && key > keys.get(index)) {
+            index++;
+        }
+        return index;
     }
 
     private int getChildPosition(BTreeNode child) {

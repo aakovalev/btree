@@ -150,10 +150,29 @@ public class BTreeOfIntegersTest {
                                         ))
                         )
                 );
+
         assertTrue(testTree.contains(4020));
         assertTrue(testTree.contains(9012));
         assertTrue(testTree.contains(3456));
         assertTrue(testTree.contains(4030));
+    }
+
+    @Test
+    public void allowsToInsertDuplicateKeys() throws Exception {
+        int branchFactor = 2;
+        WhiteBoxTestableBTreeOnIntegers tree =
+                new WhiteBoxTestableBTreeOnIntegers(branchFactor);
+        insertKeysIntoTree(keys(100, 100, 100, 100), tree);
+
+        BTreeNode expectedTree = makeNode(branchFactor, keys(100),
+                children(
+                        makeNode(branchFactor, keys(100, 100), children()),
+                        makeNode(branchFactor, keys(100), children())
+                )
+        );
+
+        BTreeNode actualTree = tree.getRoot();
+        assertThat(actualTree, is(expectedTree));
     }
 
     private BTreeNode makeNode(
@@ -191,7 +210,8 @@ public class BTreeOfIntegersTest {
     }
 
     private static class WhiteBoxTestableBTreeOnIntegers
-            extends BTreeOfIntegers {
+            extends BTreeOfIntegers
+    {
         public WhiteBoxTestableBTreeOnIntegers(int branchingFactor) {
             super(branchingFactor);
         }
