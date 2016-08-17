@@ -203,8 +203,8 @@ public class BTreeOfIntegersTest {
                     int keyCount = node.getKeys().size();
                     assertTrue(
                             format("Each node with min degree %d (except root) " +
-                                    "should contain not less than %d keys, " +
-                                    "but was %d",
+                                            "should contain not less than %d keys, " +
+                                            "but was %d",
                                     minDegree, minDegree - 1, keyCount),
                             keyCount >= minDegree - 1);
                 });
@@ -223,7 +223,7 @@ public class BTreeOfIntegersTest {
                     int keyCount = node.getKeys().size();
                     assertTrue(
                             format("Each node with min degree = %d should contain " +
-                                    "not more than than %d keys, but was %d",
+                                            "not more than than %d keys, but was %d",
                                     minDegree, 2 * minDegree - 1, keyCount),
                             keyCount <= 2 * minDegree - 1);
                 });
@@ -244,6 +244,20 @@ public class BTreeOfIntegersTest {
                             contains(keysInExpectedOrder.toArray()));
                 }
         );
+    }
+
+    @Test
+    public void keyValuesWithinEachNodeAreWithinRequiredInterval()
+            throws Exception
+    {
+        WhiteBoxTestableBTreeOnIntegers tree =
+                WhiteBoxTestableBTreeOnIntegers.generateRandomBTree();
+
+        assertTrue(keysAreWithinRange(tree.getRoot(), MIN_VALUE, MAX_VALUE));
+    }
+
+    @Test
+    public void canFindAllLeaves() throws Exception {
     }
 
     private BTreeNode makeNode(
@@ -280,16 +294,47 @@ public class BTreeOfIntegersTest {
         return asList(child);
     }
 
+    private boolean keysAreWithinRange(BTreeNode node, int left, int right) {
+        boolean valid = true;
+
+        for (int k : node.getKeys()) {
+            if (k < left || k > right) {
+                valid = false;
+                break;
+            }
+        }
+
+        if (valid && !node.isLeaf()) {
+            int currentChildIndex = 0;
+            int maxChildIndex = node.getChildren().size() - 1;
+            int maxKeyIndex = node.getKeys().size() - 1;
+
+            for (BTreeNode child : node.getChildren()) {
+                int newRightBound = currentChildIndex == 0 ?
+                        node.getKeys().get(maxKeyIndex) : right;
+                int newLeftBound = currentChildIndex == maxChildIndex ?
+                        node.getKeys().get(0) : left;
+                if (!keysAreWithinRange(child, newLeftBound, newRightBound)) {
+                    valid = false;
+                    break;
+                }
+                currentChildIndex++;
+            }
+        }
+
+        return valid;
+    }
+
     private static class WhiteBoxTestableBTreeOnIntegers
             extends BTreeOfIntegers
     {
         private final static Random RND = new Random();
 
         // limit highest min degree for test purpose
-        private final static int HIGHEST_MIN_DEGREE = 50;
+        private final static int HIGHEST_MIN_DEGREE = 10;
 
         // limit keys / min degree ratio for test purpose
-        private final static int KEY_NUMBER_MIN_DEGREE_RATIO = 25;
+        private final static int KEY_NUMBER_MIN_DEGREE_RATIO = 50;
 
         public static int generateRandomDegree() {
             return RND.nextInt(HIGHEST_MIN_DEGREE) + LOWEST_MIN_DEGREE;
