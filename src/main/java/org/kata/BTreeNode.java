@@ -13,19 +13,21 @@ import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToStrin
 import static org.apache.commons.lang3.builder.ToStringStyle.JSON_STYLE;
 
 public class BTreeNode {
-    public static final int MIN_BRANCHING_FACTOR = 2;
+    // lowest min degree (= or minimum number of node children) must be
+    // greater than 2, otherwise a tree is degenerate to a list
+    public static final int LOWEST_MIN_DEGREE = 2;
 
-    private int branchingFactor;
+    private int minDegree;
     private List<Integer> keys = new ArrayList<>();
     private List<BTreeNode> childNodes = new ArrayList<>();
 
-    public BTreeNode(int branchingFactor) {
-        if (branchingFactor < MIN_BRANCHING_FACTOR) {
+    public BTreeNode(int minDegree) {
+        if (minDegree < LOWEST_MIN_DEGREE) {
             throw new IllegalArgumentException(
-                    format("Branching Factor should be greater than " +
-                            "or equals to 2, but passed '%d'", branchingFactor));
+                    format("Min degree for tree node should be greater than " +
+                            "or equals to 2, but passed '%d'", minDegree));
         }
-        this.branchingFactor = branchingFactor;
+        this.minDegree = minDegree;
     }
 
     public boolean contains(int key) {
@@ -53,15 +55,15 @@ public class BTreeNode {
         return keys.size() >= maxKeysPerNode();
     }
 
-    public int getBranchingFactor() {
-        return branchingFactor;
+    public int getMinDegree() {
+        return minDegree;
     }
 
     public void splitChild(BTreeNode child) {
         BTreeNode parent = this;
         int median = child.getMedianOfKeys();
 
-        BTreeNode newSubNode = new BTreeNode(branchingFactor);
+        BTreeNode newSubNode = new BTreeNode(minDegree);
         child.moveHalfOfKeysTo(newSubNode);
         if (!child.isLeaf()) {
             child.moveHalfOfChilds(newSubNode);
@@ -90,7 +92,7 @@ public class BTreeNode {
     @Override
     public int hashCode() {
         return new HashCodeBuilder()
-                .append(branchingFactor)
+                .append(minDegree)
                 .append(keys)
                 .append(childNodes)
                 .toHashCode();
@@ -109,7 +111,7 @@ public class BTreeNode {
         }
         BTreeNode otherNode = (BTreeNode) obj;
         return new EqualsBuilder()
-                .append(branchingFactor, otherNode.branchingFactor)
+                .append(minDegree, otherNode.minDegree)
                 .append(keys, otherNode.keys)
                 .append(childNodes, otherNode.childNodes)
                 .isEquals();
@@ -140,7 +142,7 @@ public class BTreeNode {
     private void moveHalfOfKeysTo(BTreeNode destNode) {
         List<Integer> keysForNewSubNode = getKeysForNewSubNodeOnSplit();
         destNode.insertKeys(keysForNewSubNode);
-        keys = keys.subList(0, branchingFactor - 1);
+        keys = keys.subList(0, minDegree - 1);
     }
 
     private void moveHalfOfChilds(BTreeNode destNode) {
@@ -150,11 +152,11 @@ public class BTreeNode {
     }
 
     private Integer getMedianOfKeys() {
-        return keys.get(branchingFactor - 1);
+        return keys.get(minDegree - 1);
     }
 
     private List<Integer> getKeysForNewSubNodeOnSplit() {
-        return keys.subList(branchingFactor, keys.size());
+        return keys.subList(minDegree, keys.size());
     }
 
     private List<BTreeNode> getChildrenForNewSubNodeOnSplit() {
@@ -184,6 +186,6 @@ public class BTreeNode {
     }
 
     private int maxKeysPerNode() {
-        return 2 * branchingFactor - 1;
+        return 2 * minDegree - 1;
     }
 }

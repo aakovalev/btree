@@ -9,7 +9,7 @@ public class BTreeOfIntegers {
 
     public void insert(int key) {
         if (root.isFull()) {
-            BTreeNode newRoot = new BTreeNode(root.getBranchingFactor());
+            BTreeNode newRoot = new BTreeNode(root.getMinDegree());
             newRoot.addChild(0, root);
             newRoot.splitChild(root);
             root = newRoot;

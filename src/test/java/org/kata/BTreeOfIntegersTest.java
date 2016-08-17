@@ -13,8 +13,8 @@ import static org.junit.Assert.assertTrue;
 public class BTreeOfIntegersTest {
     @Test
     public void canAddOneKeyToEmptyTree() throws Exception {
-        int branchFactor = 3;
-        BTreeOfIntegers tree = new BTreeOfIntegers(branchFactor);
+        int minDegree = 3;
+        BTreeOfIntegers tree = new BTreeOfIntegers(minDegree);
         insertKeysIntoTree(keys(1234), tree);
 
         assertTrue("Tree should contain just added key", tree.contains(1234));
@@ -29,24 +29,25 @@ public class BTreeOfIntegersTest {
         insertKeysIntoTree(keys(1234), tree);
         tree.remove(testKey);
 
-        assertFalse("Tree should not contain removed testKey", tree.contains(testKey));
+        assertFalse("Tree should not contain removed testKey",
+                tree.contains(testKey));
     }
 
     @Test
     public void whenRootLeafNodeIsFullAndKeyIsAdded()
             throws Exception
     {
-        int branchFactor = 2;
+        int minDegree = 2;
         WhiteBoxTestableBTreeOnIntegers tree =
-                new WhiteBoxTestableBTreeOnIntegers(branchFactor);
+                new WhiteBoxTestableBTreeOnIntegers(minDegree);
         insertKeysIntoTree(keys(1234, 5678, 9012, 3456), tree);
 
         BTreeNode expectedTree =
-                makeNode(branchFactor, keys(5678),
+                makeNode(minDegree, keys(5678),
                         children(
-                                makeNode(branchFactor, keys(1234, 3456),
+                                makeNode(minDegree, keys(1234, 3456),
                                         children()),
-                                makeNode(branchFactor, keys(9012), children())
+                                makeNode(minDegree, keys(9012), children())
                         )
                 );
 
@@ -58,19 +59,19 @@ public class BTreeOfIntegersTest {
     public void whenNonRootNoneInternalNodeIsFullAndNewKeyIsAdded()
             throws Exception
     {
-        int branchFactor = 2;
+        int minDegree = 2;
         WhiteBoxTestableBTreeOnIntegers tree =
-                new WhiteBoxTestableBTreeOnIntegers(branchFactor);
+                new WhiteBoxTestableBTreeOnIntegers(minDegree);
         insertKeysIntoTree(keys(1234, 5678, 9012, 3456, 4010, 4020), tree);
 
         BTreeNode expectedTree =
-                makeNode(branchFactor, keys(3456, 5678),
+                makeNode(minDegree, keys(3456, 5678),
                         children(
-                                makeNode(branchFactor, keys(1234),
+                                makeNode(minDegree, keys(1234),
                                         children()),
-                                makeNode(branchFactor, keys(4010, 4020),
+                                makeNode(minDegree, keys(4010, 4020),
                                         children()),
-                                makeNode(branchFactor, keys(9012),
+                                makeNode(minDegree, keys(9012),
                                         children())
                         )
                 );
@@ -81,39 +82,39 @@ public class BTreeOfIntegersTest {
 
     @Test
     public void whenInternalNodeIsFullAndNewKeyIsAdded() throws Exception {
-        int branchFactor = 2;
+        int minDegree = 2;
         WhiteBoxTestableBTreeOnIntegers tree =
-                new WhiteBoxTestableBTreeOnIntegers(branchFactor);
+                new WhiteBoxTestableBTreeOnIntegers(minDegree);
         insertKeysIntoTree(
                 keys(1234, 5678, 9012, 3456, 4010, 4020, 4030, 4040,
                         4050, 4060, 4070, 4080, 4090), tree);
 
-        BTreeNode expectedTree = makeNode(branchFactor, keys(4020, 4060),
+        BTreeNode expectedTree = makeNode(minDegree, keys(4020, 4060),
                 children(
-                        makeNode(branchFactor, keys(3456),
+                        makeNode(minDegree, keys(3456),
                                 children(
-                                        makeNode(branchFactor,
+                                        makeNode(minDegree,
                                                 keys(1234), children()),
-                                        makeNode(branchFactor,
+                                        makeNode(minDegree,
                                                 keys(4010), children())
                                 )
                         ),
-                        makeNode(branchFactor, keys(4040),
+                        makeNode(minDegree, keys(4040),
                                 children(
-                                        makeNode(branchFactor,
+                                        makeNode(minDegree,
                                                 keys(4030), children()),
-                                        makeNode(branchFactor,
+                                        makeNode(minDegree,
                                                 keys(4050), children())
                                 )
                         ),
-                        makeNode(branchFactor, keys(5678),
+                        makeNode(minDegree, keys(5678),
                                 children(
                                         makeNode(
-                                                branchFactor,
+                                                minDegree,
                                                 keys(4070, 4080, 4090),
                                                 children()),
                                         makeNode(
-                                                branchFactor,
+                                                minDegree,
                                                 keys(9012),
                                                 children())
                                 ))
@@ -125,26 +126,26 @@ public class BTreeOfIntegersTest {
 
     @Test
     public void shouldFindKeyIfExistsInTree() throws Exception {
-        int branchFactor = 2;
+        int minDegree = 2;
         BTreeNode testTree =
-                makeNode(branchFactor, keys(4020),
+                makeNode(minDegree, keys(4020),
                         children(
-                                makeNode(branchFactor, keys(3456),
+                                makeNode(minDegree, keys(3456),
                                         children(
-                                                makeNode(branchFactor,
+                                                makeNode(minDegree,
                                                         keys(1234),
                                                         children()),
-                                                makeNode(branchFactor,
+                                                makeNode(minDegree,
                                                         keys(4010),
                                                         children())
                                         )
                                 ),
-                                makeNode(branchFactor, keys(5678),
+                                makeNode(minDegree, keys(5678),
                                         children(
-                                                makeNode(branchFactor,
+                                                makeNode(minDegree,
                                                         keys(4030, 4040, 4050),
                                                         children()),
-                                                makeNode(branchFactor,
+                                                makeNode(minDegree,
                                                         keys(9012),
                                                         children())
                                         ))
@@ -159,15 +160,15 @@ public class BTreeOfIntegersTest {
 
     @Test
     public void allowsToInsertDuplicateKeys() throws Exception {
-        int branchFactor = 2;
+        int minDegree = 2;
         WhiteBoxTestableBTreeOnIntegers tree =
-                new WhiteBoxTestableBTreeOnIntegers(branchFactor);
+                new WhiteBoxTestableBTreeOnIntegers(minDegree);
         insertKeysIntoTree(keys(100, 100, 100, 100), tree);
 
-        BTreeNode expectedTree = makeNode(branchFactor, keys(100),
+        BTreeNode expectedTree = makeNode(minDegree, keys(100),
                 children(
-                        makeNode(branchFactor, keys(100, 100), children()),
-                        makeNode(branchFactor, keys(100), children())
+                        makeNode(minDegree, keys(100, 100), children()),
+                        makeNode(minDegree, keys(100), children())
                 )
         );
 
@@ -176,9 +177,9 @@ public class BTreeOfIntegersTest {
     }
 
     private BTreeNode makeNode(
-            int branchingFactor, List<Integer> keys, List<BTreeNode> children)
+            int minDegree, List<Integer> keys, List<BTreeNode> children)
     {
-        BTreeNode expectedTree = new BTreeNode(branchingFactor);
+        BTreeNode expectedTree = new BTreeNode(minDegree);
         insertKeysIntoNode(keys, expectedTree);
         insertChildrenIntoNode(children, expectedTree);
         return expectedTree;
@@ -212,8 +213,8 @@ public class BTreeOfIntegersTest {
     private static class WhiteBoxTestableBTreeOnIntegers
             extends BTreeOfIntegers
     {
-        public WhiteBoxTestableBTreeOnIntegers(int branchingFactor) {
-            super(branchingFactor);
+        public WhiteBoxTestableBTreeOnIntegers(int minDegree) {
+            super(minDegree);
         }
 
         public BTreeNode getRoot() {
