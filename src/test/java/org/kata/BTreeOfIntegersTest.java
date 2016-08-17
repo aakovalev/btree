@@ -2,13 +2,21 @@ package org.kata;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
+import static java.lang.Integer.MAX_VALUE;
+import static java.lang.Integer.MIN_VALUE;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.kata.BTreeNode.LOWEST_MIN_DEGREE;
 
 public class BTreeOfIntegersTest {
     @Test
@@ -156,6 +164,12 @@ public class BTreeOfIntegersTest {
         assertTrue(testTree.contains(9012));
         assertTrue(testTree.contains(3456));
         assertTrue(testTree.contains(4030));
+
+        assertFalse(testTree.contains(9099));
+        assertFalse(testTree.contains(MIN_VALUE));
+        assertFalse(testTree.contains(MAX_VALUE));
+        assertFalse(testTree.contains(4031));
+        assertFalse(testTree.contains(4021));
     }
 
     @Test
@@ -174,6 +188,62 @@ public class BTreeOfIntegersTest {
 
         BTreeNode actualTree = tree.getRoot();
         assertThat(actualTree, is(expectedTree));
+    }
+
+    @Test
+    public void eachNodeShouldContainNotLessThanMinDegreeMinusOneKeysExceptTheRoot()
+            throws Exception
+    {
+        WhiteBoxTestableBTreeOnIntegers tree =
+                WhiteBoxTestableBTreeOnIntegers.generateRandomBTree();
+
+        tree.getAllNonRootNodes().stream().forEach(
+                node -> {
+                    int minDegree = node.getMinDegree();
+                    int keyCount = node.getKeys().size();
+                    assertTrue(
+                            format("Each node with min degree %d (except root) " +
+                                    "should contain not less than %d keys, " +
+                                    "but was %d",
+                                    minDegree, minDegree - 1, keyCount),
+                            keyCount >= minDegree - 1);
+                });
+    }
+
+    @Test
+    public void eachNodeShouldContainNotMoreThanMinDegreeByTwoMinusOneKeys()
+            throws Exception
+    {
+        WhiteBoxTestableBTreeOnIntegers tree =
+                WhiteBoxTestableBTreeOnIntegers.generateRandomBTree();
+
+        tree.getAllNodes().stream().forEach(
+                node -> {
+                    int minDegree = node.getMinDegree();
+                    int keyCount = node.getKeys().size();
+                    assertTrue(
+                            format("Each node with min degree = %d should contain " +
+                                    "not more than than %d keys, but was %d",
+                                    minDegree, 2 * minDegree - 1, keyCount),
+                            keyCount <= 2 * minDegree - 1);
+                });
+    }
+
+    @Test
+    public void keysWithinEachNodeShouldBeOrderedAsc() throws Exception {
+        WhiteBoxTestableBTreeOnIntegers tree =
+                WhiteBoxTestableBTreeOnIntegers.generateRandomBTree();
+
+        tree.getAllNodes().stream().forEach(
+                node -> {
+                    List<Integer> keysInExpectedOrder =
+                            new ArrayList<>(node.getKeys());
+                    Collections.sort(keysInExpectedOrder);
+
+                    assertThat(node.getKeys(),
+                            contains(keysInExpectedOrder.toArray()));
+                }
+        );
     }
 
     private BTreeNode makeNode(
@@ -213,12 +283,55 @@ public class BTreeOfIntegersTest {
     private static class WhiteBoxTestableBTreeOnIntegers
             extends BTreeOfIntegers
     {
+        private final static Random RND = new Random();
+
+        // limit highest min degree for test purpose
+        private final static int HIGHEST_MIN_DEGREE = 50;
+
+        // limit keys / min degree ratio for test purpose
+        private final static int KEY_NUMBER_MIN_DEGREE_RATIO = 25;
+
+        public static int generateRandomDegree() {
+            return RND.nextInt(HIGHEST_MIN_DEGREE) + LOWEST_MIN_DEGREE;
+        }
+
+        public static WhiteBoxTestableBTreeOnIntegers generateRandomBTree()
+        {
+            WhiteBoxTestableBTreeOnIntegers generatedTree =
+                    new WhiteBoxTestableBTreeOnIntegers(generateRandomDegree());
+            populateWithKeys(generatedTree);
+            return generatedTree;
+        }
+
+        private static void populateWithKeys(
+                WhiteBoxTestableBTreeOnIntegers tree)
+        {
+            int numberOfKeysToGenerate =
+                    tree.getMinDegree() * KEY_NUMBER_MIN_DEGREE_RATIO;
+            RND.ints().limit(numberOfKeysToGenerate).forEach(tree::insert);
+        }
+
         public WhiteBoxTestableBTreeOnIntegers(int minDegree) {
             super(minDegree);
         }
 
         public BTreeNode getRoot() {
             return root;
+        }
+
+        public int getMinDegree() {
+            return root.getMinDegree();
+        }
+
+        public List<BTreeNode> getAllNonRootNodes() {
+            return root.getAllDescendants();
+        }
+
+        public List<BTreeNode> getAllNodes() {
+            List<BTreeNode> allNodes = new ArrayList<>();
+            allNodes.add(root);
+            allNodes.addAll(root.getAllDescendants());
+            return allNodes;
         }
     }
 }

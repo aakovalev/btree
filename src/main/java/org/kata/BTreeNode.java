@@ -43,10 +43,6 @@ public class BTreeNode {
         keys.remove(valueOf(key));
     }
 
-    public List<Integer> getKeys() {
-        return unmodifiableList(keys);
-    }
-
     public boolean isLeaf() {
         return childNodes.size() == 0;
     }
@@ -120,6 +116,24 @@ public class BTreeNode {
     @Override
     public String toString() {
         return reflectionToString(this, JSON_STYLE);
+    }
+
+    protected List<Integer> getKeys() {
+        return unmodifiableList(keys);
+    }
+
+    protected List<BTreeNode> getChildren() {
+        return unmodifiableList(childNodes);
+    }
+
+    protected List<BTreeNode> getAllDescendants() {
+        List<BTreeNode> allDescendants = new ArrayList<>();
+        allDescendants.addAll(getChildren());
+        if (!isLeaf()) {
+            getChildren().stream().forEach(
+                    child -> allDescendants.addAll(child.getAllDescendants()));
+        }
+        return allDescendants;
     }
 
     protected void addChild(int index, BTreeNode childNode) {

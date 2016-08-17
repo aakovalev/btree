@@ -10,7 +10,7 @@ import static org.junit.Assert.assertTrue;
 public class BTreeNodeTest {
 
     @Test(expected = IllegalArgumentException.class)
-    public void branchingFactorMustBeGreaterThanTwo() throws Exception {
+    public void minDegreeMustBeGreaterThanTwo() throws Exception {
         new BTreeNode(1);
     }
 
