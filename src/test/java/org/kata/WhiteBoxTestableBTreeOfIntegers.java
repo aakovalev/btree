@@ -6,6 +6,12 @@ import java.util.Random;
 
 import static org.kata.BTreeOfIntegers.BTreeNode.LOWEST_MIN_DEGREE;
 
+/**
+ * This is "test specific subclass" implementation of <code>BTreeOfIntegers</code>
+ * class that adds some convenient methods that allows to test implementation
+ * of B-tree internal data structure without polluting <code>BTreeOfIntegers</code> class
+ * and exposing to much implementation details to outside
+ */
 public class WhiteBoxTestableBTreeOfIntegers extends BTreeOfIntegers {
     private final static Random RND = new Random();
 
@@ -56,5 +62,9 @@ public class WhiteBoxTestableBTreeOfIntegers extends BTreeOfIntegers {
         allNodes.add(root);
         allNodes.addAll(root.getAllDescendants());
         return allNodes;
+    }
+
+    public void setRoot(BTreeNode root) {
+        this.root = root;
     }
 }
