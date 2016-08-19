@@ -3,6 +3,7 @@ package org.kata;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -77,7 +78,7 @@ public class BTreeOfIntegers {
     /**
      * <code>BTreeNode</code> is implementation of node of B-tree data structure
      */
-    static class BTreeNode {
+    static class BTreeNode implements Serializable {
         // lowest min degree must be greater than 2, otherwise a tree is
         // degenerated to a list
         public static final int LOWEST_MIN_DEGREE = 2;
