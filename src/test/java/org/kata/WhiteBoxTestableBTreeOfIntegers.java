@@ -64,6 +64,14 @@ public class WhiteBoxTestableBTreeOfIntegers extends BTreeOfIntegers {
         return allNodes;
     }
 
+    public List<BTreeNode> getAllLeaves() {
+        return root.getAllLeaves();
+    }
+
+    public int getDistanceFromRootTo(BTreeNode node) {
+        return root.getDistanceTo(node);
+    }
+
     public void setRoot(BTreeNode root) {
         this.root = root;
     }

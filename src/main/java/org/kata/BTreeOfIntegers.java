@@ -224,16 +224,26 @@ public class BTreeOfIntegers {
             if (targetNode.equals(this)) {
                 return path;
             }
-            if (childNodes.contains(targetNode)) {
-                path.add(this);
-            } else {
-                int index = 0;
-                int key = targetNode.keys.get(0);
-                while (index < keys.size() && key > keys.get(index)) {
-                    index++;
+            else if (!isLeaf()) {
+                if (childNodes.contains(targetNode)) {
+                    path.add(this);
+                } else {
+                    int index = 0;
+                    int key = targetNode.keys.get(0);
+                    while (index < keys.size() && key > keys.get(index)) {
+                        index++;
+                    }
+                    // handle case when there are same keys but in different children
+                    do {
+                        BTreeNode child = childNodes.get(index);
+                        List<BTreeNode> pathFromChild = child.findPath(targetNode);
+                        if (pathFromChild.size() > 0) {
+                            path.add(child);
+                            path.addAll(pathFromChild);
+                        }
+                        index++;
+                    } while (index < childNodes.size() && childNodes.get(index).contains(key));
                 }
-                path.add(this);
-                path.addAll(childNodes.get(index).findPath(targetNode));
             }
             return path;
         }

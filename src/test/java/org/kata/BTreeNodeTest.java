@@ -91,12 +91,32 @@ public class BTreeNodeTest {
         BTreeNode tree = makeNode(minDegree, keys(40),
                 children(
                         internalNode,
-                        makeNode(minDegree, keys(60), children(leafThree))
+                        makeNode(minDegree, keys(60), children(
+                                makeNode(minDegree, keys(50), children()),
+                                leafThree))
                 )
         );
 
         assertThat(tree.getDistanceTo(leafThree), is(2));
         assertThat(tree.getDistanceTo(internalNode), is(1));
         assertThat(tree.getDistanceTo(tree), is(0));
+    }
+
+    @Test
+    public void canFindHeightForLeafsWhenThereAreDuplicateKeys() throws Exception {
+        int minDegree = 2;
+        BTreeNode leafToFind = makeNode(minDegree, keys(100), children());
+
+        BTreeNode tree = makeNode(minDegree, keys(100), children(
+                makeNode(minDegree, keys(100), children(
+                        makeNode(minDegree, keys(99), children()),
+                        makeNode(minDegree, keys(100, 100), children()))),
+                makeNode(minDegree, keys(100), children(
+                        leafToFind,
+                        makeNode(minDegree, keys(101), children())
+                )))
+        );
+
+        assertThat(tree.getDistanceTo(leafToFind), is(2));
     }
 }

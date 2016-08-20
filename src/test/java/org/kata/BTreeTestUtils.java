@@ -6,7 +6,6 @@ import static java.util.Arrays.asList;
 import static org.kata.BTreeOfIntegers.*;
 
 public class BTreeTestUtils {
-    private static final int DEFAULT_MIN_DEGREE_IN_TESTS = 2;
 
     public static BTreeNode makeNode(
             int minDegree, List<Integer> keys, List<BTreeOfIntegers.BTreeNode> children)

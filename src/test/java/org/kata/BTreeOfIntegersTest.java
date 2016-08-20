@@ -253,6 +253,17 @@ public class BTreeOfIntegersTest {
         assertTrue(keysAreWithinRange(tree.getRoot(), MIN_VALUE, MAX_VALUE));
     }
 
+    @Test
+    public void eachLeafIsAtTheSameDistanceFromRoot() throws Exception {
+        WhiteBoxTestableBTreeOfIntegers tree =
+                WhiteBoxTestableBTreeOfIntegers.generateRandomBTree();
+
+        BTreeNode oneOfLeafs = tree.getAllLeaves().get(0);
+        int distanceFromRoot = tree.getDistanceFromRootTo(oneOfLeafs);
+        tree.getAllLeaves().stream().forEach(leaf -> assertThat(
+                tree.getDistanceFromRootTo(leaf), is(distanceFromRoot)));
+    }
+
     // @todo: the method should be part of BTreeNode and tested with unit tests
     private boolean keysAreWithinRange(BTreeNode node, int left, int right) {
         boolean valid = true;
