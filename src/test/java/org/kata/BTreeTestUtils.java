@@ -4,11 +4,12 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.kata.BTreeOfIntegers.*;
+import static org.kata.BTreeOfIntegers.BTreeNode.LOWEST_MIN_DEGREE;
 
 public class BTreeTestUtils {
 
     public static BTreeNode makeNode(
-            int minDegree, List<Integer> keys, List<BTreeOfIntegers.BTreeNode> children)
+            int minDegree, List<Integer> keys, List<BTreeNode> children)
     {
         BTreeNode expectedTree = new BTreeNode(minDegree);
         insertKeysIntoNode(keys, expectedTree);
@@ -16,8 +17,14 @@ public class BTreeTestUtils {
         return expectedTree;
     }
 
+    public static BTreeNode makeNode(
+            List<Integer> keys, List<BTreeNode> children)
+    {
+        return makeNode(LOWEST_MIN_DEGREE, keys, children);
+    }
+
     public static void insertChildrenIntoNode(
-            List<BTreeOfIntegers.BTreeNode> children, BTreeNode node)
+            List<BTreeNode> children, BTreeNode node)
     {
         int i = 0;
         for (BTreeNode child : children) {
@@ -37,7 +44,7 @@ public class BTreeTestUtils {
         return asList(key);
     }
 
-    public static List<BTreeOfIntegers.BTreeNode> children(BTreeNode... child) {
+    public static List<BTreeNode> children(BTreeNode... child) {
         return asList(child);
     }
 }

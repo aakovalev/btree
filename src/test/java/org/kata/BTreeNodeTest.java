@@ -3,6 +3,8 @@ package org.kata;
 import org.junit.Test;
 import org.kata.BTreeOfIntegers.BTreeNode;
 
+import static java.lang.Integer.MAX_VALUE;
+import static java.lang.Integer.MIN_VALUE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -63,16 +65,13 @@ public class BTreeNodeTest {
 
     @Test
     public void canFindAllLeavesOfTheGivenNode() throws Exception {
-        int minDegree = 2;
+        BTreeNode leafOne = makeNode(keys(10), children());
+        BTreeNode leafTwo = makeNode(keys(30), children());
+        BTreeNode leafThree = makeNode(keys(70, 80, 90), children());
 
-        BTreeNode leafOne = makeNode(minDegree, keys(10), children());
-        BTreeNode leafTwo = makeNode(minDegree, keys(30), children());
-        BTreeNode leafThree = makeNode(minDegree, keys(70, 80, 90), children());
-
-        BTreeNode tree = makeNode(minDegree, keys(40),
-                children(
-                        makeNode(minDegree, keys(20), children(leafOne, leafTwo)),
-                        makeNode(minDegree, keys(60), children(leafThree))
+        BTreeNode tree = makeNode(keys(40), children(
+                makeNode(keys(20), children(leafOne, leafTwo)),
+                makeNode(keys(60), children(leafThree))
                 )
         );
 
@@ -81,19 +80,16 @@ public class BTreeNodeTest {
 
     @Test
     public void canFindHeightForTheGivenLeaf() throws Exception {
-        int minDegree = 2;
+        BTreeNode leafOne = makeNode(keys(10), children());
+        BTreeNode leafTwo = makeNode(keys(30), children());
+        BTreeNode leafThree = makeNode(keys(70, 80, 90), children());
+        BTreeNode internalNode = makeNode(keys(20), children(leafOne, leafTwo));
 
-        BTreeNode leafOne = makeNode(minDegree, keys(10), children());
-        BTreeNode leafTwo = makeNode(minDegree, keys(30), children());
-        BTreeNode leafThree = makeNode(minDegree, keys(70, 80, 90), children());
-        BTreeNode internalNode = makeNode(minDegree, keys(20), children(leafOne, leafTwo));
-
-        BTreeNode tree = makeNode(minDegree, keys(40),
-                children(
-                        internalNode,
-                        makeNode(minDegree, keys(60), children(
-                                makeNode(minDegree, keys(50), children()),
-                                leafThree))
+        BTreeNode tree = makeNode(keys(40), children(
+                internalNode,
+                makeNode(keys(60), children(
+                        makeNode(keys(50), children()),
+                        leafThree))
                 )
         );
 
@@ -104,19 +100,43 @@ public class BTreeNodeTest {
 
     @Test
     public void canFindHeightForLeafsWhenThereAreDuplicateKeys() throws Exception {
-        int minDegree = 2;
-        BTreeNode leafToFind = makeNode(minDegree, keys(100), children());
+        BTreeNode leafToFind = makeNode(keys(100), children());
 
-        BTreeNode tree = makeNode(minDegree, keys(100), children(
-                makeNode(minDegree, keys(100), children(
-                        makeNode(minDegree, keys(99), children()),
-                        makeNode(minDegree, keys(100, 100), children()))),
-                makeNode(minDegree, keys(100), children(
+        BTreeNode tree = makeNode(keys(100), children(
+                makeNode(keys(100), children(
+                        makeNode(keys(99), children()),
+                        makeNode(keys(100, 100), children()))),
+                makeNode(keys(100), children(
                         leafToFind,
-                        makeNode(minDegree, keys(101), children())
+                        makeNode(keys(101), children())
                 )))
         );
 
         assertThat(tree.getDistanceTo(leafToFind), is(2));
+    }
+
+    @Test
+    public void canDetectIfKeysOfNodeAreWithinRangeOrNot() throws Exception {
+        BTreeNode leftNode = makeNode(keys(1000), children());
+        BTreeNode rightNode = makeNode(keys(2000), children());
+
+        BTreeNode wrongSubTree = makeNode(keys(3500), children(
+                makeNode(keys(3600), children()),
+                makeNode(keys(3700), children())
+        ));
+
+        BTreeNode goodSubTree = makeNode(keys(1500), children(
+                leftNode, rightNode));
+
+        assertThat(leftNode.keysAreWithinRange(MIN_VALUE, 1234), is(true));
+        assertThat(rightNode.keysAreWithinRange(1234, MAX_VALUE), is(true));
+
+        assertThat(leftNode.keysAreWithinRange(MIN_VALUE, 900), is(false));
+        assertThat(leftNode.keysAreWithinRange(1100, MAX_VALUE), is(false));
+        assertThat(rightNode.keysAreWithinRange(1500, 1700), is(false));
+        assertThat(rightNode.keysAreWithinRange(2100, 2200), is(false));
+
+        assertThat(wrongSubTree.keysAreWithinRange(3500, MAX_VALUE), is(false));
+        assertThat(goodSubTree.keysAreWithinRange(MIN_VALUE, 3000), is(true));
     }
 }

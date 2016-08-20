@@ -219,6 +219,37 @@ public class BTreeOfIntegers {
             return findPath(node).size();
         }
 
+        protected boolean keysAreWithinRange(int left, int right) {
+            boolean valid = true;
+
+            for (int k : getKeys()) {
+                if (k < left || k > right) {
+                    valid = false;
+                    break;
+                }
+            }
+
+            if (valid && !isLeaf()) {
+                int currentChildIndex = 0;
+                int maxChildIndex = getChildren().size() - 1;
+                int maxKeyIndex = getKeys().size() - 1;
+
+                for (BTreeNode child : getChildren()) {
+                    int newRightBound = currentChildIndex == 0 ?
+                            getKeys().get(maxKeyIndex) : right;
+                    int newLeftBound = currentChildIndex == maxChildIndex ?
+                            getKeys().get(0) : left;
+                    if (!child.keysAreWithinRange(newLeftBound, newRightBound)) {
+                        valid = false;
+                        break;
+                    }
+                    currentChildIndex++;
+                }
+            }
+
+            return valid;
+        }
+
         private List<BTreeNode> findPath(BTreeNode targetNode) {
             List<BTreeNode> path = new ArrayList<>();
             if (targetNode.equals(this)) {

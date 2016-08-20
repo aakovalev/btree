@@ -250,7 +250,7 @@ public class BTreeOfIntegersTest {
         WhiteBoxTestableBTreeOfIntegers tree =
                 WhiteBoxTestableBTreeOfIntegers.generateRandomBTree();
 
-        assertTrue(keysAreWithinRange(tree.getRoot(), MIN_VALUE, MAX_VALUE));
+        assertTrue(tree.getRoot().keysAreWithinRange(MIN_VALUE, MAX_VALUE));
     }
 
     @Test
@@ -262,37 +262,5 @@ public class BTreeOfIntegersTest {
         int distanceFromRoot = tree.getDistanceFromRootTo(oneOfLeafs);
         tree.getAllLeaves().stream().forEach(leaf -> assertThat(
                 tree.getDistanceFromRootTo(leaf), is(distanceFromRoot)));
-    }
-
-    // @todo: the method should be part of BTreeNode and tested with unit tests
-    private boolean keysAreWithinRange(BTreeNode node, int left, int right) {
-        boolean valid = true;
-
-        for (int k : node.getKeys()) {
-            if (k < left || k > right) {
-                valid = false;
-                break;
-            }
-        }
-
-        if (valid && !node.isLeaf()) {
-            int currentChildIndex = 0;
-            int maxChildIndex = node.getChildren().size() - 1;
-            int maxKeyIndex = node.getKeys().size() - 1;
-
-            for (BTreeNode child : node.getChildren()) {
-                int newRightBound = currentChildIndex == 0 ?
-                        node.getKeys().get(maxKeyIndex) : right;
-                int newLeftBound = currentChildIndex == maxChildIndex ?
-                        node.getKeys().get(0) : left;
-                if (!keysAreWithinRange(child, newLeftBound, newRightBound)) {
-                    valid = false;
-                    break;
-                }
-                currentChildIndex++;
-            }
-        }
-
-        return valid;
     }
 }
