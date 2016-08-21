@@ -3,9 +3,11 @@ package org.kata;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import static java.lang.Integer.valueOf;
 import static java.lang.String.format;
@@ -24,6 +26,18 @@ import static org.apache.commons.lang3.builder.ToStringStyle.JSON_STYLE;
  * @author kovalev.aleksey@gmail.com
  */
 public class BTreeOfIntegers {
+    private static Storage<BTreeNode> DEFAULT_STORAGE;
+
+    private static final Logger LOG = Logger.getLogger(
+            BTreeOfIntegers.class.getName());
+
+    static {
+        try {
+            DEFAULT_STORAGE = new FileBasedStorage<>();
+        } catch (IOException e) {
+            LOG.severe("Unable to create storage for B-tree node entries!");
+        }
+    }
 
     protected BTreeNode root;
 
@@ -34,7 +48,11 @@ public class BTreeOfIntegers {
      *                  tree node and child nodes.
      */
     public BTreeOfIntegers(int minDegree) {
-        this.root = new BTreeNode(minDegree);
+        this(minDegree, DEFAULT_STORAGE);
+    }
+
+    public BTreeOfIntegers(int minDegree, Storage<BTreeNode> storage) {
+        this.root = new BTreeNode(minDegree, storage);
     }
 
     /**
@@ -86,14 +104,20 @@ public class BTreeOfIntegers {
         private int minDegree;
         private List<Integer> keys = new ArrayList<>();
         private List<BTreeNode> childNodes = new ArrayList<>();
+        private transient Storage<BTreeNode> storage;
 
-        public BTreeNode(int minDegree) {
+        public BTreeNode(int minDegree, Storage<BTreeNode> storage) {
             if (minDegree < LOWEST_MIN_DEGREE) {
                 throw new IllegalArgumentException(
                         format("Min degree for tree node should be greater than " +
                                 "or equals to 2, but passed '%d'", minDegree));
             }
             this.minDegree = minDegree;
+            this.storage = storage;
+        }
+
+        public BTreeNode(int minDegree) {
+            this(minDegree, DEFAULT_STORAGE);
         }
 
         public boolean contains(int key) {
