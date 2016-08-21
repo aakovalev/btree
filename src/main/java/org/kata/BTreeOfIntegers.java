@@ -199,7 +199,7 @@ public class BTreeOfIntegers {
             return new HashCodeBuilder()
                     .append(minDegree)
                     .append(keys)
-                    .append(getChidlren())
+                    .append(getChildren())
                     .toHashCode();
         }
 
@@ -218,7 +218,7 @@ public class BTreeOfIntegers {
             return new EqualsBuilder()
                     .append(minDegree, otherNode.minDegree)
                     .append(keys, otherNode.keys)
-                    .append(getChidlren(), otherNode.getChidlren())
+                    .append(getChildren(), otherNode.getChildren())
                     .isEquals();
         }
 
@@ -401,7 +401,7 @@ public class BTreeOfIntegers {
             return readFromDisk(childHandle);
         }
 
-        private List<BTreeNode> getChidlren() {
+        private List<BTreeNode> getChildren() {
             List<BTreeNode> children = new ArrayList<>();
             if (!isLeaf()) {
                 children.addAll(childrenHandles.stream()

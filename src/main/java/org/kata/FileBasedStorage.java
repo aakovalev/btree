@@ -14,7 +14,7 @@ import java.util.Map;
  * @param <T> a type of objects stored in this storage
  */
 public class FileBasedStorage<T> implements Storage<T> {
-    // @to-do: this maps needs to be stored in file non in mem as well
+    // @to-do: this maps needs to be stored in file, non in mem too
     private Map<Long, Long> offsetInFileByHandle = new HashMap<>();
 
     private Path dataFile;
@@ -59,7 +59,7 @@ public class FileBasedStorage<T> implements Storage<T> {
     }
 
     private long appendObjectToDataFile(T object) throws IOException {
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try (ByteArrayOutputStream bos =  new ByteArrayOutputStream();
              ObjectOutputStream oos = new ObjectOutputStream(bos);
              FileOutputStream fos = new FileOutputStream(dataFile.toFile(), true))
         {
