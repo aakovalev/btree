@@ -9,8 +9,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItems;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.kata.BTreeTestUtils.*;
 
 public class BTreeNodeTest {
@@ -138,5 +137,38 @@ public class BTreeNodeTest {
 
         assertThat(wrongSubTree.keysAreWithinRange(3500, MAX_VALUE), is(false));
         assertThat(goodSubTree.keysAreWithinRange(MIN_VALUE, 3000), is(true));
+    }
+
+    @Test
+    public void justCreatedNodeShouldBePlacedInTheStorage() throws Exception {
+        BTreeNode originalNode = new BTreeNode(10);
+        assertNotNull(originalNode.getHandle());
+
+        BTreeNode restoredNode = originalNode.readFromDisk(originalNode.getHandle());
+        assertThat(restoredNode, is(originalNode));
+    }
+
+    @Test
+    public void nodesAreEqualIfRepresentTheSameLogicalNodeOrTree() throws Exception {
+        int minDegree = 2;
+        BTreeNode oneNode = new BTreeNode(minDegree);
+        BTreeNode otherNode = new BTreeNode(minDegree);
+        assertThat(oneNode, is(otherNode));
+
+        oneNode = makeNode(keys(100), children());
+        otherNode = makeNode(keys(100), children());
+        assertThat(oneNode, is(otherNode));
+
+        oneNode = makeNode(keys(100), children(
+                makeNode(keys(50), children()),
+                makeNode(keys(150), children())
+                )
+        );
+        otherNode = makeNode(keys(100), children(
+                makeNode(keys(50), children()),
+                makeNode(keys(150), children())
+                )
+        );
+        assertThat(oneNode, is(otherNode));
     }
 }

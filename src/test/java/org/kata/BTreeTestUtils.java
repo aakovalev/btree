@@ -14,6 +14,7 @@ public class BTreeTestUtils {
         BTreeNode expectedTree = new BTreeNode(minDegree);
         insertKeysIntoNode(keys, expectedTree);
         insertChildrenIntoNode(children, expectedTree);
+        expectedTree.saveOnDisk();
         return expectedTree;
     }
 
@@ -28,7 +29,7 @@ public class BTreeTestUtils {
     {
         int i = 0;
         for (BTreeNode child : children) {
-            node.addChild(i++, child);
+            node.addChild(i++, child.getHandle());
         }
     }
 

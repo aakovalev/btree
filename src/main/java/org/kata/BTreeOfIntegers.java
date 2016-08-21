@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import static java.lang.Integer.valueOf;
 import static java.lang.String.format;
 import static java.util.Collections.unmodifiableList;
+import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
 import static org.apache.commons.lang3.builder.ToStringStyle.JSON_STYLE;
 
@@ -26,19 +27,6 @@ import static org.apache.commons.lang3.builder.ToStringStyle.JSON_STYLE;
  * @author kovalev.aleksey@gmail.com
  */
 public class BTreeOfIntegers {
-    private static Storage<BTreeNode> DEFAULT_STORAGE;
-
-    private static final Logger LOG = Logger.getLogger(
-            BTreeOfIntegers.class.getName());
-
-    static {
-        try {
-            DEFAULT_STORAGE = new FileBasedStorage<>();
-        } catch (IOException e) {
-            LOG.severe("Unable to create storage for B-tree node entries!");
-        }
-    }
-
     protected BTreeNode root;
 
     /**
@@ -48,11 +36,7 @@ public class BTreeOfIntegers {
      *                  tree node and child nodes.
      */
     public BTreeOfIntegers(int minDegree) {
-        this(minDegree, DEFAULT_STORAGE);
-    }
-
-    public BTreeOfIntegers(int minDegree, Storage<BTreeNode> storage) {
-        this.root = new BTreeNode(minDegree, storage);
+        this.root = new BTreeNode(minDegree);
     }
 
     /**
@@ -63,7 +47,7 @@ public class BTreeOfIntegers {
     public void insert(int key) {
         if (root.isFull()) {
             BTreeNode newRoot = new BTreeNode(root.getMinDegree());
-            newRoot.addChild(0, root);
+            newRoot.addChild(0, root.getHandle());
             newRoot.splitChild(root);
             root = newRoot;
         }
@@ -103,21 +87,30 @@ public class BTreeOfIntegers {
 
         private int minDegree;
         private List<Integer> keys = new ArrayList<>();
-        private List<BTreeNode> childNodes = new ArrayList<>();
-        private transient Storage<BTreeNode> storage;
+        private List<Long> childrenHandles = new ArrayList<>();
+        private static Storage<BTreeNode> storage;
 
-        public BTreeNode(int minDegree, Storage<BTreeNode> storage) {
+        private static final Logger LOG = Logger.getLogger(
+                BTreeNode.class.getName());
+
+        static {
+            try {
+                storage = new FileBasedStorage<>();
+            } catch (IOException e) {
+                LOG.severe("Unable to create storage for B-tree node entries!");
+            }
+        }
+
+        private Long handle;
+
+        public BTreeNode(int minDegree) {
             if (minDegree < LOWEST_MIN_DEGREE) {
                 throw new IllegalArgumentException(
                         format("Min degree for tree node should be greater than " +
                                 "or equals to 2, but passed '%d'", minDegree));
             }
             this.minDegree = minDegree;
-            this.storage = storage;
-        }
-
-        public BTreeNode(int minDegree) {
-            this(minDegree, DEFAULT_STORAGE);
+            saveOnDisk();
         }
 
         public boolean contains(int key) {
@@ -126,7 +119,7 @@ public class BTreeOfIntegers {
                 index++;
             }
             return keys.contains(key) ||
-                    !isLeaf() && childNodes.get(index).contains(key);
+                    !isLeaf() && indexToNode(index).contains(key);
         }
 
         public void remove(int key) {
@@ -134,7 +127,7 @@ public class BTreeOfIntegers {
         }
 
         public boolean isLeaf() {
-            return childNodes.size() == 0;
+            return childrenHandles.size() == 0;
         }
 
         public boolean isFull() {
@@ -157,14 +150,20 @@ public class BTreeOfIntegers {
 
             parent.insertKey(median);
             int newSubNodePositionInParent = parent.getChildPosition(child) + 1;
-            parent.addChild(newSubNodePositionInParent, newSubNode);
+            parent.addChild(newSubNodePositionInParent, newSubNode.getHandle());
+
+            newSubNode.saveOnDisk();
+            child.saveOnDisk();
+            parent.saveOnDisk();
         }
 
         public void insertNonFull(int key) {
             if (isLeaf()) {
                 insertKey(key);
+                saveOnDisk();
             } else {
-                BTreeNode node = findChildNodeToInsertKey(key);
+                Long nodeHandle = findChildNodeToInsertKey(key);
+                BTreeNode node = readFromDisk(nodeHandle);
                 if (node.isFull()) {
                     splitChild(node);
                     insertNonFull(key);
@@ -174,12 +173,33 @@ public class BTreeOfIntegers {
             }
         }
 
+        public void saveOnDisk() {
+            try {
+                if (handle == null) {
+                    handle = storage.create(this);
+                } else {
+                    storage.update(this, handle);
+                }
+            } catch (IOException e) {
+                LOG.severe("Unable to store B-tree node in storage");
+            }
+        }
+
+        public BTreeNode readFromDisk(long handle) {
+            try {
+                return storage.load(handle);
+            } catch (IOException | ClassNotFoundException e) {
+                throw new RuntimeException(
+                        "Unable to read B-tree node from disk");
+            }
+        }
+
         @Override
         public int hashCode() {
             return new HashCodeBuilder()
                     .append(minDegree)
                     .append(keys)
-                    .append(childNodes)
+                    .append(getChidlren())
                     .toHashCode();
         }
 
@@ -198,7 +218,7 @@ public class BTreeOfIntegers {
             return new EqualsBuilder()
                     .append(minDegree, otherNode.minDegree)
                     .append(keys, otherNode.keys)
-                    .append(childNodes, otherNode.childNodes)
+                    .append(getChidlren(), otherNode.getChidlren())
                     .isEquals();
         }
 
@@ -211,22 +231,25 @@ public class BTreeOfIntegers {
             return unmodifiableList(keys);
         }
 
-        protected List<BTreeNode> getChildren() {
-            return unmodifiableList(childNodes);
+        protected List<Long> getChildHandles() {
+            return unmodifiableList(childrenHandles);
         }
 
         protected List<BTreeNode> getAllDescendants() {
             List<BTreeNode> allDescendants = new ArrayList<>();
-            allDescendants.addAll(getChildren());
             if (!isLeaf()) {
-                getChildren().stream().forEach(
-                        child -> allDescendants.addAll(child.getAllDescendants()));
+                getChildHandles().stream().forEach(
+                        childHandle -> {
+                            BTreeNode child = readFromDisk(childHandle);
+                            allDescendants.addAll(child.getAllDescendants());
+                        }
+                );
             }
             return allDescendants;
         }
 
-        protected void addChild(int index, BTreeNode childNode) {
-            this.childNodes.add(index, childNode);
+        protected void addChild(int index, Long childNodeHandle) {
+            this.childrenHandles.add(index, childNodeHandle);
         }
 
         protected List<BTreeNode> getAllLeaves() {
@@ -234,13 +257,44 @@ public class BTreeOfIntegers {
             if (isLeaf()) {
                 allLeaves.add(this);
             } else {
-                childNodes.stream().forEach(c -> allLeaves.addAll(c.getAllLeaves()));
+                childrenHandles.stream().forEach(childHandle -> {
+                    BTreeNode child = readFromDisk(childHandle);
+                    allLeaves.addAll(child.getAllLeaves());
+                });
             }
             return allLeaves;
         }
 
         protected int getDistanceTo(BTreeNode node) {
             return findPath(node).size();
+        }
+
+        private List<Long> findPath(BTreeNode targetNode) {
+            List<Long> path = new ArrayList<>();
+            if (targetNode.equals(this)) {
+                return path;
+            } else if (!isLeaf()) {
+                if (childrenHandles.contains(targetNode.getHandle())) {
+                    path.add(this.getHandle());
+                } else {
+                    int index = 0;
+                    int key = targetNode.keys.get(0);
+                    while (index < keys.size() && key > keys.get(index)) {
+                        index++;
+                    }
+                    // handle case when there are same keys but in different children
+                    while (index < childrenHandles.size() && indexToNode(index).contains(key)) {
+                        BTreeNode child = indexToNode(index);
+                        List<Long> pathFromChild = child.findPath(targetNode);
+                        if (pathFromChild.size() > 0) {
+                            path.add(child.getHandle());
+                            path.addAll(pathFromChild);
+                        }
+                        index++;
+                    }
+                }
+            }
+            return path;
         }
 
         protected boolean keysAreWithinRange(int left, int right) {
@@ -255,14 +309,15 @@ public class BTreeOfIntegers {
 
             if (valid && !isLeaf()) {
                 int currentChildIndex = 0;
-                int maxChildIndex = getChildren().size() - 1;
+                int maxChildIndex = getChildHandles().size() - 1;
                 int maxKeyIndex = getKeys().size() - 1;
 
-                for (BTreeNode child : getChildren()) {
+                for (Long childHandle : getChildHandles()) {
                     int newRightBound = currentChildIndex == 0 ?
                             getKeys().get(maxKeyIndex) : right;
                     int newLeftBound = currentChildIndex == maxChildIndex ?
                             getKeys().get(0) : left;
+                    BTreeNode child = readFromDisk(childHandle);
                     if (!child.keysAreWithinRange(newLeftBound, newRightBound)) {
                         valid = false;
                         break;
@@ -274,33 +329,8 @@ public class BTreeOfIntegers {
             return valid;
         }
 
-        private List<BTreeNode> findPath(BTreeNode targetNode) {
-            List<BTreeNode> path = new ArrayList<>();
-            if (targetNode.equals(this)) {
-                return path;
-            }
-            else if (!isLeaf()) {
-                if (childNodes.contains(targetNode)) {
-                    path.add(this);
-                } else {
-                    int index = 0;
-                    int key = targetNode.keys.get(0);
-                    while (index < keys.size() && key > keys.get(index)) {
-                        index++;
-                    }
-                    // handle case when there are same keys but in different children
-                    do {
-                        BTreeNode child = childNodes.get(index);
-                        List<BTreeNode> pathFromChild = child.findPath(targetNode);
-                        if (pathFromChild.size() > 0) {
-                            path.add(child);
-                            path.addAll(pathFromChild);
-                        }
-                        index++;
-                    } while (index < childNodes.size() && childNodes.get(index).contains(key));
-                }
-            }
-            return path;
+        protected Long getHandle() {
+            return handle;
         }
 
         private void insertKeys(List<Integer> keysToInsert) {
@@ -312,20 +342,20 @@ public class BTreeOfIntegers {
             keys.add(position, key);
         }
 
-        private void insertChildren(List<BTreeNode> children) {
-            this.childNodes.addAll(children);
+        private void insertChildren(List<Long> childrenHandles) {
+            this.childrenHandles.addAll(childrenHandles);
         }
 
         private void moveHalfOfKeysTo(BTreeNode destNode) {
             List<Integer> keysForNewSubNode = getKeysForNewSubNodeOnSplit();
             destNode.insertKeys(keysForNewSubNode);
-            keys = keys.subList(0, minDegree - 1);
+            keys = new ArrayList<>(keys.subList(0, minDegree - 1));
         }
 
         private void moveHalfOfChildren(BTreeNode destNode) {
-            List<BTreeNode> childrenForNewNode = getChildrenForNewSubNodeOnSplit();
+            List<Long> childrenForNewNode = getChildrenForNewSubNodeOnSplit();
             destNode.insertChildren(childrenForNewNode);
-            childNodes.removeAll(childrenForNewNode);
+            childrenHandles.removeAll(childrenForNewNode);
         }
 
         private Integer getMedianOfKeys() {
@@ -336,14 +366,14 @@ public class BTreeOfIntegers {
             return keys.subList(minDegree, keys.size());
         }
 
-        private List<BTreeNode> getChildrenForNewSubNodeOnSplit() {
-            return childNodes
-                    .subList(childNodes.size() / 2, childNodes.size());
+        private List<Long> getChildrenForNewSubNodeOnSplit() {
+            return childrenHandles
+                    .subList(childrenHandles.size() / 2, childrenHandles.size());
         }
 
-        private BTreeNode findChildNodeToInsertKey(int key) {
+        private Long findChildNodeToInsertKey(int key) {
             int childNodeIndexByKey = findChildNodeIndexByKey(key);
-            return childNodes.get(childNodeIndexByKey);
+            return childrenHandles.get(childNodeIndexByKey);
         }
 
         private int findChildNodeIndexByKey(int key) {
@@ -359,11 +389,26 @@ public class BTreeOfIntegers {
         }
 
         private int getChildPosition(BTreeNode child) {
-            return childNodes.indexOf(child);
+            return childrenHandles.indexOf(child.getHandle());
         }
 
         private int maxKeysPerNode() {
             return 2 * minDegree - 1;
+        }
+
+        private BTreeNode indexToNode(int index) {
+            Long childHandle = childrenHandles.get(index);
+            return readFromDisk(childHandle);
+        }
+
+        private List<BTreeNode> getChidlren() {
+            List<BTreeNode> children = new ArrayList<>();
+            if (!isLeaf()) {
+                children.addAll(childrenHandles.stream()
+                        .map(this::readFromDisk)
+                        .collect(toList()));
+            }
+            return children;
         }
     }
 }
