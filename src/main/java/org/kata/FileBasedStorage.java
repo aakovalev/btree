@@ -16,22 +16,22 @@ import java.util.logging.Logger;
  * @param <T> a type of objects stored in this storage
  */
 public class FileBasedStorage<T> implements Storage<T> {
+    private static final int DEFAULT_CACHE_SIZE = 8192;
     private Logger LOG = Logger.getLogger(FileBasedStorage.class.getName());
 
     // @to-do: this maps needs to be stored in file, non in mem too
     private Map<Long, Long> offsetInFileByHandle = new HashMap<>();
+    private Map<Long, T> cache = new HashMap<>(DEFAULT_CACHE_SIZE);
 
     private FileInputStream fis;
     private FileOutputStream fos;
 
     private static long currentHandle = 0L;
-    private long position = 0L;
 
     public FileBasedStorage() throws IOException {
         Path dataFile = Files.createTempFile(null, null);
         this.fis = new FileInputStream(dataFile.toFile());
         this.fos = new FileOutputStream(dataFile.toFile(), true);
-
         deleteDataFileOnExit(dataFile);
     }
 
@@ -44,23 +44,34 @@ public class FileBasedStorage<T> implements Storage<T> {
     @Override
     public long create(T object) throws IOException {
         long handle = nextHandle();
-        offsetInFileByHandle.put(handle, appendObjectToDataFile(object));
+        if (cache.size() > DEFAULT_CACHE_SIZE) {
+            flushCacheToDisk();
+            cache.clear();
+        }
+        cache.put(handle, object);
         return handle;
     }
 
     @Override
     @SuppressWarnings(value = "unchecked")
     public T load(long handle) throws IOException, ClassNotFoundException {
+        if (cache.containsKey(handle)) {
+            return cache.get(handle);
+        }
         long offset = offsetInFileByHandle.get(handle);
         fis.getChannel().position(offset);
         ObjectInputStream ois = new ObjectInputStream(
                 new BufferedInputStream(fis));
+
         return (T) ois.readObject();
     }
 
     @Override
     public void update(T object, long handle) throws IOException {
-        offsetInFileByHandle.put(handle, appendObjectToDataFile(object));
+        if (!cache.containsKey(handle)) {
+            offsetInFileByHandle.put(handle, appendObjectToDataFile(object));
+        }
+        cache.put(handle, object);
     }
 
     private long nextHandle() {
@@ -71,10 +82,22 @@ public class FileBasedStorage<T> implements Storage<T> {
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
              ObjectOutputStream oos = new ObjectOutputStream(bos)) {
             oos.writeObject(object);
-            position = fos.getChannel().position();
+            long position = fos.getChannel().position();
             bos.writeTo(fos);
             return position;
         }
+    }
+
+    private void flushCacheToDisk() {
+        cache.entrySet().stream().forEach(entry -> {
+            try {
+                Long handle = entry.getKey();
+                long offset = appendObjectToDataFile(entry.getValue());
+                offsetInFileByHandle.put(handle, offset);
+            } catch (IOException e) {
+                LOG.severe("Unable to save b-tree node to disk");
+            }
+        });
     }
 
     private void deleteDataFileOnExit(Path dataFile) {
