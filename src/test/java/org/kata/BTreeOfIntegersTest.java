@@ -6,6 +6,7 @@ import org.kata.BTreeOfIntegers.BTreeNode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.MIN_VALUE;
@@ -262,5 +263,13 @@ public class BTreeOfIntegersTest {
         int distanceFromRoot = tree.getDistanceFromRootTo(oneOfLeafs);
         tree.getAllLeaves().stream().forEach(leaf -> assertThat(
                 tree.getDistanceFromRootTo(leaf), is(distanceFromRoot)));
+    }
+
+    @Test
+    public void smokeCheckOfPopulatingDecentSizeTree() throws Exception {
+        BTreeOfIntegers tree = new BTreeOfIntegers(10);
+        IntStream.range(0, 1000000).forEach(tree::insert);
+
+        assertTrue(tree.contains(123456));
     }
 }

@@ -95,7 +95,7 @@ public class BTreeOfIntegers {
 
         static {
             try {
-                storage = new FileBasedStorage<>();
+                storage = new CachedStorage<>(new FileBasedStorage<>());
             } catch (IOException e) {
                 LOG.severe("Unable to create storage for B-tree node entries!");
             }
