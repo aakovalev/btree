@@ -6,14 +6,17 @@ import org.kata.BTreeOfIntegers.BTreeNode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.IntStream;
 
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.MIN_VALUE;
 import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.kata.BTreeTestUtils.*;
@@ -35,7 +38,7 @@ public class BTreeOfIntegersTest {
         int testKey = 1234;
         BTreeOfIntegers tree = new BTreeOfIntegers(3);
         insertKeysIntoTree(keys(1234), tree);
-        tree.remove(testKey);
+        tree.delete(testKey);
 
         assertFalse("Tree should not contain removed testKey",
                 tree.contains(testKey));
@@ -265,7 +268,57 @@ public class BTreeOfIntegersTest {
                 tree.getDistanceFromRootTo(leaf), is(distanceFromRoot)));
     }
 
+    @Test (expected = NoSuchElementException.class)
+    public void whenNonExistingKeyRequestedToBeRemovedThrowAnException()
+            throws Exception
+    {
+        int minDegree = 2;
+        BTreeNode initialTree = makeNode(keys(1, 2, 3), children());
+        WhiteBoxTestableBTreeOfIntegers tree =
+                new WhiteBoxTestableBTreeOfIntegers(minDegree);
+        tree.setRoot(initialTree);
+
+        tree.delete(42);
+    }
+
     @Test
+    public void canDeleteKeyFromRootWhenItIsLeaf() throws Exception {
+        int keyToDelete = 4;
+        BTreeNode rootAndLeaf = makeNode(keys(3, keyToDelete, 5), children());
+        int minDegree = 2;
+        WhiteBoxTestableBTreeOfIntegers tree =
+                new WhiteBoxTestableBTreeOfIntegers(minDegree);
+        tree.setRoot(rootAndLeaf);
+        tree.delete(keyToDelete);
+
+        assertThat(rootAndLeaf.getKeys(), not(hasItem(keyToDelete)));
+    }
+
+    @Test
+    public void canDeleteKeyFromInternalLeafThatHasAtLeastMinimumDegreeOfNodes()
+            throws Exception
+    {
+        int minDegree = 2;
+        BTreeNode initialTree = makeNode(keys(3), children(
+                makeNode(keys(1, 2), children()),
+                makeNode(keys(4, 5), children())
+                )
+        );
+        WhiteBoxTestableBTreeOfIntegers tree =
+                new WhiteBoxTestableBTreeOfIntegers(minDegree);
+        tree.setRoot(initialTree);
+
+        tree.delete(2);
+
+        BTreeNode expectedTree = makeNode(keys(3), children(
+                makeNode(keys(1), children()),
+                makeNode(keys(4, 5), children())
+                )
+        );
+        assertThat(tree.getRoot(), is(expectedTree));
+    }
+
+    //@Test
     public void smokeCheckOfPopulatingDecentSizeTree() throws Exception {
         BTreeOfIntegers tree = new BTreeOfIntegers(10);
         IntStream.range(0, 1000000).forEach(tree::insert);

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 
 import static java.lang.Integer.valueOf;
@@ -66,16 +67,24 @@ public class BTreeOfIntegers {
     }
 
     /**
-     * Removes the specified key from <code>BTreeOfIntegers</code>
+     * Deletes the specified key from <code>BTreeOfIntegers</code>
      * <p>
      * Note: The implementation of this method is not yet completed!
      * </p>
      *
-     * @param key a key to remove from <code>BTreeOfIntegers</code>
+     * @param key a key to delete from <code>BTreeOfIntegers</code>
+     * @throws NoSuchElementException if tree does not contain the key
      */
-    public void remove(int key) {
-        this.root.remove(key);
+    public void delete(int key) {
+        if (root.contains(key) && root.isLeaf()) {
+            root.delete(key);
+        }
+        else {
+            BTreeNode nodeContainingKey = root.findNodeContainingKey(key);
+            nodeContainingKey.delete(key);
+        }
     }
+
 
     /**
      * <code>BTreeNode</code> is implementation of node of B-tree data structure
@@ -162,7 +171,7 @@ public class BTreeOfIntegers {
                 insertKey(key);
                 saveOnDisk();
             } else {
-                Long nodeHandle = findChildNodeToInsertKey(key);
+                Long nodeHandle = findChildNodeThatShouldContainKey(key);
                 BTreeNode node = readFromDisk(nodeHandle);
                 if (node.isFull()) {
                     splitChild(node);
@@ -171,6 +180,13 @@ public class BTreeOfIntegers {
                     node.insertNonFull(key);
                 }
             }
+        }
+
+        public void delete(int key) {
+            if (isLeaf()) {
+                keys.remove((Integer) key);
+            }
+            saveOnDisk();
         }
 
         public void saveOnDisk() {
@@ -371,7 +387,7 @@ public class BTreeOfIntegers {
                     .subList(childrenHandles.size() / 2, childrenHandles.size());
         }
 
-        private Long findChildNodeToInsertKey(int key) {
+        private Long findChildNodeThatShouldContainKey(int key) {
             int childNodeIndexByKey = findChildNodeIndexByKey(key);
             return childrenHandles.get(childNodeIndexByKey);
         }
@@ -409,6 +425,19 @@ public class BTreeOfIntegers {
                         .collect(toList()));
             }
             return children;
+        }
+
+        private BTreeNode findNodeContainingKey(int key) {
+            if (keys.contains(key)) {
+                return this;
+            }
+            if (!isLeaf()) {
+                Long nodeHandle = findChildNodeThatShouldContainKey(key);
+                BTreeNode childToLookForKey = readFromDisk(nodeHandle);
+                return childToLookForKey.findNodeContainingKey(key);
+            }
+            throw new NoSuchElementException(
+                    format("There is no key %d in the tree", key));
         }
     }
 }
