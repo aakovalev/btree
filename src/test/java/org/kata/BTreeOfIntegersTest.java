@@ -20,6 +20,7 @@ import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.kata.BTreeTestUtils.*;
+import static org.kata.WhiteBoxTestableBTreeOfIntegers.generateRandomBTree;
 
 public class BTreeOfIntegersTest {
     @Test
@@ -49,11 +50,10 @@ public class BTreeOfIntegersTest {
             throws Exception
     {
         int minDegree = 2;
-        WhiteBoxTestableBTreeOfIntegers tree =
-                new WhiteBoxTestableBTreeOfIntegers(minDegree);
-        BTreeNode originalTree =
+        BTreeNode intialTree =
                 makeNode(minDegree, keys(1234, 5678, 9012), children());
-        tree.setRoot(originalTree);
+        WhiteBoxTestableBTreeOfIntegers tree =
+                makeTestTree(minDegree, intialTree);
 
         tree.insert(3456);
 
@@ -75,14 +75,13 @@ public class BTreeOfIntegersTest {
             throws Exception
     {
         int minDegree = 2;
-        WhiteBoxTestableBTreeOfIntegers tree =
-                new WhiteBoxTestableBTreeOfIntegers(minDegree);
         BTreeNode initialTree = makeNode(minDegree, keys(5678), children(
                 makeNode(minDegree, keys(1234, 3456, 4010), children()),
                 makeNode(minDegree, keys(9012), children())
                 )
         );
-        tree.setRoot(initialTree);
+        WhiteBoxTestableBTreeOfIntegers tree =
+                makeTestTree(minDegree, initialTree);
 
         tree.insert(4020);
 
@@ -101,8 +100,6 @@ public class BTreeOfIntegersTest {
     @Test
     public void whenInternalNodeIsFullAndNewKeyIsAdded() throws Exception {
         int minDegree = 2;
-        WhiteBoxTestableBTreeOfIntegers tree =
-                new WhiteBoxTestableBTreeOfIntegers(minDegree);
         BTreeNode initialTree = makeNode(minDegree, keys(4020), children(
                 makeNode(minDegree, keys(3456), children(
                         makeNode(minDegree, keys(1234), children()),
@@ -117,7 +114,8 @@ public class BTreeOfIntegersTest {
                         )
                 ))
         );
-        tree.setRoot(initialTree);
+        WhiteBoxTestableBTreeOfIntegers tree =
+                makeTestTree(minDegree, initialTree);
 
         tree.insert(4090);
 
@@ -195,8 +193,7 @@ public class BTreeOfIntegersTest {
     public void eachNodeShouldContainNotLessThanMinDegreeMinusOneKeysExceptTheRoot()
             throws Exception
     {
-        WhiteBoxTestableBTreeOfIntegers tree =
-                WhiteBoxTestableBTreeOfIntegers.generateRandomBTree();
+        WhiteBoxTestableBTreeOfIntegers tree = generateRandomBTree();
 
         tree.getAllNonRootNodes().stream().forEach(
                 node -> {
@@ -215,8 +212,7 @@ public class BTreeOfIntegersTest {
     public void eachNodeShouldContainNotMoreThanMinDegreeByTwoMinusOneKeys()
             throws Exception
     {
-        WhiteBoxTestableBTreeOfIntegers tree =
-                WhiteBoxTestableBTreeOfIntegers.generateRandomBTree();
+        WhiteBoxTestableBTreeOfIntegers tree = generateRandomBTree();
 
         tree.getAllNodes().stream().forEach(
                 node -> {
@@ -232,8 +228,7 @@ public class BTreeOfIntegersTest {
 
     @Test
     public void keysWithinEachNodeShouldBeOrderedAsc() throws Exception {
-        WhiteBoxTestableBTreeOfIntegers tree =
-                WhiteBoxTestableBTreeOfIntegers.generateRandomBTree();
+        WhiteBoxTestableBTreeOfIntegers tree = generateRandomBTree();
 
         tree.getAllNodes().stream().forEach(
                 node -> {
@@ -251,16 +246,14 @@ public class BTreeOfIntegersTest {
     public void keyValuesWithinEachNodeAreWithinRequiredInterval()
             throws Exception
     {
-        WhiteBoxTestableBTreeOfIntegers tree =
-                WhiteBoxTestableBTreeOfIntegers.generateRandomBTree();
+        WhiteBoxTestableBTreeOfIntegers tree = generateRandomBTree();
 
         assertTrue(tree.getRoot().keysAreWithinRange(MIN_VALUE, MAX_VALUE));
     }
 
     @Test
     public void eachLeafIsAtTheSameDistanceFromRoot() throws Exception {
-        WhiteBoxTestableBTreeOfIntegers tree =
-                WhiteBoxTestableBTreeOfIntegers.generateRandomBTree();
+        WhiteBoxTestableBTreeOfIntegers tree = generateRandomBTree();
 
         BTreeNode oneOfLeafs = tree.getAllLeaves().get(0);
         int distanceFromRoot = tree.getDistanceFromRootTo(oneOfLeafs);
@@ -268,15 +261,14 @@ public class BTreeOfIntegersTest {
                 tree.getDistanceFromRootTo(leaf), is(distanceFromRoot)));
     }
 
-    @Test (expected = NoSuchElementException.class)
+    @Test(expected = NoSuchElementException.class)
     public void whenNonExistingKeyRequestedToBeRemovedThrowAnException()
             throws Exception
     {
         int minDegree = 2;
         BTreeNode initialTree = makeNode(keys(1, 2, 3), children());
         WhiteBoxTestableBTreeOfIntegers tree =
-                new WhiteBoxTestableBTreeOfIntegers(minDegree);
-        tree.setRoot(initialTree);
+                makeTestTree(minDegree, initialTree);
 
         tree.delete(42);
     }
@@ -287,8 +279,8 @@ public class BTreeOfIntegersTest {
         BTreeNode rootAndLeaf = makeNode(keys(3, keyToDelete, 5), children());
         int minDegree = 2;
         WhiteBoxTestableBTreeOfIntegers tree =
-                new WhiteBoxTestableBTreeOfIntegers(minDegree);
-        tree.setRoot(rootAndLeaf);
+                makeTestTree(minDegree, rootAndLeaf);
+
         tree.delete(keyToDelete);
 
         assertThat(rootAndLeaf.getKeys(), not(hasItem(keyToDelete)));
@@ -305,8 +297,7 @@ public class BTreeOfIntegersTest {
                 )
         );
         WhiteBoxTestableBTreeOfIntegers tree =
-                new WhiteBoxTestableBTreeOfIntegers(minDegree);
-        tree.setRoot(initialTree);
+                makeTestTree(minDegree, initialTree);
 
         tree.delete(2);
 
@@ -318,11 +309,89 @@ public class BTreeOfIntegersTest {
         assertThat(tree.getRoot(), is(expectedTree));
     }
 
+    @Test
+    public void deleteFromNonLeafNodeAndChildAfterKeyWithAtLeastMinDegreeOfNodes()
+            throws Exception
+    {
+        int minDegree = 2;
+        BTreeNode initialTree = makeNode(keys(4, 8), children(
+                makeNode(keys(1, 2, 3), children()),
+                makeNode(keys(5, 6, 7), children()),
+                makeNode(keys(9, 10, 11), children())
+                )
+        );
+        WhiteBoxTestableBTreeOfIntegers tree =
+                makeTestTree(minDegree, initialTree);
+
+        tree.delete(8);
+
+        BTreeNode expectedTree = makeNode(keys(4, 9), children(
+                makeNode(keys(1, 2, 3), children()),
+                makeNode(keys(5, 6, 7), children()),
+                makeNode(keys(10, 11), children())
+        ));
+        assertThat(tree.getRoot(), is(expectedTree));
+    }
+
+    @Test
+    public void deleteFromNonLeafNodeWhenChildAfterKeyContainsLessThanMinDegreeNodes()
+            throws Exception
+    {
+        int minDegree = 2;
+        BTreeNode initialTree = makeNode(keys(4, 8), children(
+                makeNode(keys(1, 2, 3), children()),
+                makeNode(keys(5, 6, 7), children()),
+                makeNode(keys(10), children())
+                )
+        );
+        WhiteBoxTestableBTreeOfIntegers tree =
+                makeTestTree(minDegree, initialTree);
+
+        tree.delete(8);
+
+        BTreeNode expectedTree = makeNode(keys(4, 7), children(
+                makeNode(keys(1, 2, 3), children()),
+                makeNode(keys(5, 6), children()),
+                makeNode(keys(10), children())
+        ));
+        assertThat(tree.getRoot(), is(expectedTree));
+    }
+
+    //@Test
+    public void deleteFromNonLeafNodeWhenChildsAroundKeyContainLessThanMinDegreeOfNodes()
+            throws Exception
+    {
+        int minDegree = 2;
+        BTreeNode initialTree = makeNode(keys(4, 8), children(
+                makeNode(keys(1, 2, 3), children()),
+                makeNode(keys(7), children()),
+                makeNode(keys(11), children())
+                )
+        );
+        WhiteBoxTestableBTreeOfIntegers tree =
+                makeTestTree(minDegree, initialTree);
+
+        tree.delete(8);
+
+        BTreeNode expectedTree = makeNode(keys(4), children(
+                makeNode(keys(1, 2, 3), children()),
+                makeNode(keys(7, 11), children())
+        ));
+        assertThat(tree.getRoot(), is(expectedTree));
+    }
+
     //@Test
     public void smokeCheckOfPopulatingDecentSizeTree() throws Exception {
         BTreeOfIntegers tree = new BTreeOfIntegers(10);
         IntStream.range(0, 1000000).forEach(tree::insert);
 
         assertTrue(tree.contains(123456));
+    }
+
+    private WhiteBoxTestableBTreeOfIntegers makeTestTree(int minDegree, BTreeNode root) {
+        WhiteBoxTestableBTreeOfIntegers tree =
+                new WhiteBoxTestableBTreeOfIntegers(minDegree);
+        tree.setRoot(root);
+        return tree;
     }
 }

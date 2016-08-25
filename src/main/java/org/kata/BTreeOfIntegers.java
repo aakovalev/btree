@@ -11,6 +11,7 @@ import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 
 import static java.lang.Integer.valueOf;
+import static java.lang.Math.max;
 import static java.lang.String.format;
 import static java.util.Collections.unmodifiableList;
 import static java.util.stream.Collectors.toList;
@@ -78,8 +79,7 @@ public class BTreeOfIntegers {
     public void delete(int key) {
         if (root.contains(key) && root.isLeaf()) {
             root.delete(key);
-        }
-        else {
+        } else {
             BTreeNode nodeContainingKey = root.findNodeContainingKey(key);
             nodeContainingKey.delete(key);
         }
@@ -185,6 +185,23 @@ public class BTreeOfIntegers {
         public void delete(int key) {
             if (isLeaf()) {
                 keys.remove((Integer) key);
+            }
+            else {
+                int childNodeIndex = findChildNodeIndexByKey(key);
+
+                BTreeNode nextChild = indexToNode(childNodeIndex + 1);
+                BTreeNode prevChild = indexToNode(childNodeIndex);
+
+                if (nextChild.numberOfKeys() >= minDegree) {
+                    Integer leftMostKey = nextChild.leftMostKey();
+                    nextChild.delete(leftMostKey);
+                    replaceKey(key, leftMostKey);
+                }
+                else if (prevChild.numberOfKeys() >= minDegree) {
+                    Integer rightMostKey = prevChild.rightMostKey();
+                    prevChild.delete(rightMostKey);
+                    replaceKey(key, rightMostKey);
+                }
             }
             saveOnDisk();
         }
@@ -438,6 +455,24 @@ public class BTreeOfIntegers {
             }
             throw new NoSuchElementException(
                     format("There is no key %d in the tree", key));
+        }
+
+        private Integer leftMostKey() {
+            return keys.get(0);
+        }
+
+        private Integer rightMostKey() {
+            return keys.get(max(0, keys.size() - 1));
+        }
+
+        private int numberOfKeys() {
+            return keys.size();
+        }
+
+        private void replaceKey(int oldKey, int newKey) {
+            int keyToRemovePosition = keys.indexOf(oldKey);
+            keys.remove((Integer) oldKey);
+            keys.add(keyToRemovePosition, newKey);
         }
     }
 }
