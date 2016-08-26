@@ -202,6 +202,13 @@ public class BTreeOfIntegers {
                     prevChild.delete(rightMostKey);
                     replaceKey(key, rightMostKey);
                 }
+                else {
+                    nextChild.moveAllKeysTo(prevChild);
+                    prevChild.insertKey(key);
+                    keys.remove((Integer) key);
+                    childrenHandles.remove(childNodeIndex + 1);
+                    prevChild.delete(key);
+                }
             }
             saveOnDisk();
         }
@@ -367,7 +374,7 @@ public class BTreeOfIntegers {
         }
 
         private void insertKeys(List<Integer> keysToInsert) {
-            keysToInsert.stream().forEach(this::insertNonFull);
+            keysToInsert.stream().forEach(this::insertKey);
         }
 
         private void insertKey(int key) {
@@ -473,6 +480,11 @@ public class BTreeOfIntegers {
             int keyToRemovePosition = keys.indexOf(oldKey);
             keys.remove((Integer) oldKey);
             keys.add(keyToRemovePosition, newKey);
+        }
+
+        private void moveAllKeysTo(BTreeNode otherNode) {
+            otherNode.insertKeys(keys);
+            keys.clear();
         }
     }
 }

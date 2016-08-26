@@ -357,7 +357,7 @@ public class BTreeOfIntegersTest {
         assertThat(tree.getRoot(), is(expectedTree));
     }
 
-    //@Test
+    @Test
     public void deleteFromNonLeafNodeWhenChildsAroundKeyContainLessThanMinDegreeOfNodes()
             throws Exception
     {
